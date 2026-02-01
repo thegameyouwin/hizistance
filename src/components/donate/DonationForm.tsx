@@ -4,11 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import MaragaLogo from "@/components/MaragaLogo";
-import { Smartphone, CreditCard } from "lucide-react";
+import { Smartphone, CreditCard, Zap } from "lucide-react";
+import maragaLogo from "@/assets/maraga-logo.png";
 
 interface DonationFormProps {
-  onSubmit: (amount: string, paymentMethod: "mpesa" | "stripe") => void;
+  onSubmit: (amount: string, paymentMethod: "mpesa" | "stripe", formData: {
+    name: string;
+    phone: string;
+    email: string;
+    message: string;
+    showInfo: boolean;
+    currency: string;
+    frequency: string;
+  }) => void;
 }
 
 const DonationForm = ({ onSubmit }: DonationFormProps) => {
@@ -16,6 +24,8 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
   const [amount, setAmount] = useState<string>("1,000");
   const [customAmount, setCustomAmount] = useState<string>("");
   const [showInfo, setShowInfo] = useState(false);
+  const [frequency, setFrequency] = useState<"one-time" | "monthly">("one-time");
+  const [currency, setCurrency] = useState<string>("KES");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -23,12 +33,21 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
     message: "",
   });
 
-  const amounts = ["50", "100", "500", "1,000", "2,000", "5,000", "10,000"];
+  // Amount options based on currency
+  const kesAmounts = ["50", "100", "500", "1,000", "2,000", "5,000", "10,000"];
+  const usdAmounts = ["10", "25", "50", "100", "250", "500", "1000"];
+  
+  const amounts = currency === "USD" ? usdAmounts : kesAmounts;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalAmount = amount || customAmount;
-    onSubmit(finalAmount, paymentMethod);
+    onSubmit(finalAmount, paymentMethod, {
+      ...formData,
+      showInfo,
+      currency,
+      frequency,
+    });
   };
 
   return (
@@ -36,7 +55,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
       {/* Payment Method Tabs */}
       <div className="flex border-b border-border">
         <button
-          onClick={() => setPaymentMethod("mpesa")}
+          onClick={() => { setPaymentMethod("mpesa"); setCurrency("KES"); setAmount("1,000"); }}
           className={`flex-1 py-4 px-6 font-medium flex items-center justify-center gap-2 transition-colors ${
             paymentMethod === "mpesa" 
               ? "bg-card text-foreground border-b-2 border-primary" 
@@ -47,14 +66,14 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           M-Pesa
         </button>
         <button
-          onClick={() => setPaymentMethod("stripe")}
+          onClick={() => { setPaymentMethod("stripe"); setCurrency("USD"); setAmount("100"); }}
           className={`flex-1 py-4 px-6 font-medium flex items-center justify-center gap-2 transition-colors ${
             paymentMethod === "stripe" 
               ? "bg-primary text-primary-foreground" 
               : "bg-muted text-muted-foreground hover:bg-muted/80"
           }`}
         >
-          <CreditCard className="w-5 h-5" />
+          <Zap className="w-5 h-5" />
           Stripe/PayPal
         </button>
       </div>
@@ -63,23 +82,73 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
       <div className="p-6 md:p-8">
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <MaragaLogo />
+          <img src={maragaLogo} alt="Maraga '27" className="h-12" />
         </div>
 
         <div className="text-center mb-8">
           <h2 className="text-2xl font-heading font-bold text-primary mb-2">
-            Make your contribution with {paymentMethod === "mpesa" ? "M-Pesa" : "Card"}
+            Make your contribution with {paymentMethod === "mpesa" ? "M-Pesa" : "Stripe/PayPal"}
           </h2>
           <p className="text-muted-foreground">
-            Safe, fast and secure {paymentMethod === "mpesa" ? "mobile" : "online"} payments
+            {paymentMethod === "mpesa" 
+              ? "Safe, fast and secure mobile payments" 
+              : "Secure payments via Stripe and PayPal"}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Frequency Toggle - Only for Stripe */}
+          {paymentMethod === "stripe" && (
+            <div className="flex rounded-lg overflow-hidden border border-border">
+              <button
+                type="button"
+                onClick={() => setFrequency("one-time")}
+                className={`flex-1 py-3 px-4 font-medium transition-colors ${
+                  frequency === "one-time"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-foreground hover:bg-muted"
+                }`}
+              >
+                One-time
+              </button>
+              <button
+                type="button"
+                onClick={() => setFrequency("monthly")}
+                className={`flex-1 py-3 px-4 font-medium transition-colors ${
+                  frequency === "monthly"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-foreground hover:bg-muted"
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+          )}
+
+          {/* Currency Selection - Only for Stripe */}
+          {paymentMethod === "stripe" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Currency
+              </label>
+              <Select value={currency} onValueChange={(value) => { setCurrency(value); setAmount(value === "USD" ? "100" : "1,000"); }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">$ US Dollar (USD)</SelectItem>
+                  <SelectItem value="EUR">€ Euro (EUR)</SelectItem>
+                  <SelectItem value="GBP">£ British Pound (GBP)</SelectItem>
+                  <SelectItem value="KES">KES Kenyan Shilling (KES)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Amount Selection */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-3">
-              Choose Amount (KES)
+              Choose Amount ({currency === "USD" || currency === "EUR" || currency === "GBP" ? "$" : "KES"})
             </label>
             <div className="grid grid-cols-4 gap-3">
               {amounts.map((amt) => (
@@ -93,7 +162,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
                       : "border-border bg-card text-foreground hover:border-primary"
                   }`}
                 >
-                  {amt}
+                  {currency !== "KES" && "$"}{amt}
                 </button>
               ))}
               <button
@@ -148,33 +217,35 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Phone Number
-            </label>
-            <div className="flex gap-2">
-              <Select defaultValue="+254">
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="+254">🇰🇪 +254</SelectItem>
-                  <SelectItem value="+255">🇹🇿 +255</SelectItem>
-                  <SelectItem value="+256">🇺🇬 +256</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                placeholder="712345678"
-                className="flex-1"
-              />
+          {paymentMethod === "mpesa" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Phone Number
+              </label>
+              <div className="flex gap-2">
+                <Select defaultValue="+254">
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="+254">🇰🇪 +254</SelectItem>
+                    <SelectItem value="+255">🇹🇿 +255</SelectItem>
+                    <SelectItem value="+256">🇺🇬 +256</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="712345678"
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter your mobile money number (without country code)
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Enter your mobile money number (without country code)
-            </p>
-          </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">

@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import maragaHero from "@/assets/maraga-hero.png";
 
 const About = () => {
   const testimonial = {
@@ -14,8 +15,13 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Hero Banner */}
-      <section className="gradient-hero py-16 md:py-24">
+      {/* Hero Banner with Background Image */}
+      <section 
+        className="relative py-20 md:py-32 bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: `linear-gradient(to right, rgba(26, 135, 84, 0.9), rgba(26, 135, 84, 0.7)), url(${maragaHero})` 
+        }}
+      >
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-primary-foreground mb-6">
             David Maraga

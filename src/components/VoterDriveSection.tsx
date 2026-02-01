@@ -5,6 +5,8 @@ import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import ThankYouVolunteer from "./ThankYouVolunteer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VoterDriveSectionProps {
   showThankYou?: boolean;
@@ -48,8 +50,33 @@ const VoterDriveSection = ({ showThankYou: initialShowThankYou = false }: VoterD
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    
+    if (!fullName || !formData.email) {
+      toast.error("Please fill in your name and email");
+      return;
+    }
+    
+    const { error } = await supabase
+      .from("volunteers")
+      .insert({
+        name: fullName,
+        email: formData.email,
+        phone: formData.phone || null,
+        county: formData.county || null,
+        constituency: formData.constituency || null,
+      });
+    
+    if (error) {
+      console.error("Error submitting volunteer form:", error);
+      toast.error("Failed to submit. Please try again.");
+      return;
+    }
+    
+    toast.success("Thank you for volunteering!");
     setShowThankYou(true);
   };
 

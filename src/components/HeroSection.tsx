@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
+import maragaHero from "@/assets/maraga-hero.png";
 
 interface HeroSectionProps {
   maragaImage?: string;
@@ -44,17 +45,13 @@ const HeroSection = ({ maragaImage }: HeroSectionProps) => {
           {/* Right Content - Candidate Card */}
           <div className="flex justify-center md:justify-end">
             <div className="bg-card rounded-2xl shadow-elevated overflow-hidden max-w-sm">
-              {/* Image Placeholder - Green gradient with initials */}
-              <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center relative">
-                {maragaImage ? (
-                  <img 
-                    src={maragaImage} 
-                    alt="David Maraga" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-6xl font-heading font-bold text-primary/30">DM</div>
-                )}
+              {/* Maraga Image */}
+              <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center relative overflow-hidden">
+                <img 
+                  src={maragaImage || maragaHero} 
+                  alt="David Maraga" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               
               {/* Info */}
