@@ -33,6 +33,42 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
     message: "",
   });
 
+  // Determine color scheme based on payment method
+  const isMpesa = paymentMethod === "mpesa";
+  const primaryColor = isMpesa ? "green" : "blue";
+  
+  // Color classes based on payment method
+  const colorClasses = {
+    primary: isMpesa ? "bg-primary text-primary-foreground" : "bg-blue-600 text-white",
+    primaryHover: isMpesa ? "hover:bg-primary/90" : "hover:bg-blue-700",
+    primaryBorder: isMpesa ? "border-primary" : "border-blue-600",
+    primaryText: isMpesa ? "text-primary" : "text-blue-600",
+    tabActive: isMpesa 
+      ? "bg-primary text-primary-foreground" 
+      : "bg-blue-600 text-white",
+    tabInactive: isMpesa 
+      ? "bg-muted text-muted-foreground hover:bg-muted/80" 
+      : "bg-blue-50 text-blue-800 hover:bg-blue-100",
+    frequencyActive: isMpesa 
+      ? "bg-primary text-primary-foreground" 
+      : "bg-blue-600 text-white",
+    buttonGradient: isMpesa 
+      ? "btn-donate-gradient" 
+      : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600",
+    amountSelected: isMpesa 
+      ? "border-primary bg-primary text-primary-foreground" 
+      : "border-blue-600 bg-blue-600 text-white",
+    amountHover: isMpesa 
+      ? "hover:border-primary" 
+      : "hover:border-blue-600",
+    customAmountSelected: isMpesa 
+      ? "border-primary bg-primary text-primary-foreground" 
+      : "border-blue-600 bg-blue-600 text-white",
+    activeTabBorder: isMpesa 
+      ? "border-b-2 border-primary" 
+      : "border-b-2 border-blue-600",
+  };
+
   // Amount options based on currency
   const kesAmounts = ["50", "100", "500", "1,000", "2,000", "5,000", "10,000"];
   const usdAmounts = ["10", "25", "50", "100", "250", "500", "1000"];
@@ -58,8 +94,8 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           onClick={() => { setPaymentMethod("mpesa"); setCurrency("KES"); setAmount("1,000"); }}
           className={`flex-1 py-4 px-6 font-medium flex items-center justify-center gap-2 transition-colors ${
             paymentMethod === "mpesa" 
-              ? "bg-card text-foreground border-b-2 border-primary" 
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              ? colorClasses.tabActive
+              : colorClasses.tabInactive
           }`}
         >
           <Smartphone className="w-5 h-5" />
@@ -69,8 +105,8 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           onClick={() => { setPaymentMethod("stripe"); setCurrency("USD"); setAmount("100"); }}
           className={`flex-1 py-4 px-6 font-medium flex items-center justify-center gap-2 transition-colors ${
             paymentMethod === "stripe" 
-              ? "bg-primary text-primary-foreground" 
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              ? colorClasses.tabActive
+              : colorClasses.tabInactive
           }`}
         >
           <Zap className="w-5 h-5" />
@@ -86,7 +122,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-heading font-bold text-primary mb-2">
+          <h2 className={`text-2xl font-heading font-bold ${colorClasses.primaryText} mb-2`}>
             Make your contribution with {paymentMethod === "mpesa" ? "M-Pesa" : "Stripe/PayPal"}
           </h2>
           <p className="text-muted-foreground">
@@ -105,7 +141,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
                 onClick={() => setFrequency("one-time")}
                 className={`flex-1 py-3 px-4 font-medium transition-colors ${
                   frequency === "one-time"
-                    ? "bg-primary text-primary-foreground"
+                    ? colorClasses.frequencyActive
                     : "bg-card text-foreground hover:bg-muted"
                 }`}
               >
@@ -116,7 +152,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
                 onClick={() => setFrequency("monthly")}
                 className={`flex-1 py-3 px-4 font-medium transition-colors ${
                   frequency === "monthly"
-                    ? "bg-primary text-primary-foreground"
+                    ? colorClasses.frequencyActive
                     : "bg-card text-foreground hover:bg-muted"
                 }`}
               >
@@ -158,8 +194,8 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
                   onClick={() => { setAmount(amt); setCustomAmount(""); }}
                   className={`py-3 px-2 md:px-4 rounded-lg border text-sm font-medium transition-colors ${
                     amount === amt
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-card text-foreground hover:border-primary"
+                      ? colorClasses.amountSelected
+                      : `border-border bg-card text-foreground ${colorClasses.amountHover}`
                   }`}
                 >
                   {currency !== "KES" && "$"}{amt}
@@ -170,8 +206,8 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
                 onClick={() => setAmount("")}
                 className={`py-3 px-2 md:px-4 rounded-lg border text-sm font-medium transition-colors ${
                   amount === "" && customAmount
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card text-foreground hover:border-primary"
+                    ? colorClasses.customAmountSelected
+                    : `border-border bg-card text-foreground ${colorClasses.amountHover}`
                 }`}
               >
                 Other
@@ -275,7 +311,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           <Button 
             type="submit" 
             size="lg" 
-            className="w-full btn-donate-gradient rounded-lg py-6 text-lg"
+            className={`w-full ${colorClasses.buttonGradient} rounded-lg py-6 text-lg`}
           >
             {paymentMethod === "stripe" ? "Continue to Payment" : "Donate Now"}
           </Button>
