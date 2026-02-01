@@ -35,38 +35,38 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
 
   // Determine color scheme based on payment method
   const isMpesa = paymentMethod === "mpesa";
-  const primaryColor = isMpesa ? "green" : "blue";
   
   // Color classes based on payment method
   const colorClasses = {
-    primary: isMpesa ? "bg-primary text-primary-foreground" : "bg-blue-600 text-white",
-    primaryHover: isMpesa ? "hover:bg-primary/90" : "hover:bg-blue-700",
-    primaryBorder: isMpesa ? "border-primary" : "border-blue-600",
-    primaryText: isMpesa ? "text-primary" : "text-blue-600",
+    // For M-Pesa: green theme, for Stripe: purple theme (#9910FB)
+    primary: isMpesa ? "bg-primary text-primary-foreground" : "bg-[#9910FB] text-white",
+    primaryHover: isMpesa ? "hover:bg-primary/90" : "hover:bg-[#9910FB]/90",
+    primaryBorder: isMpesa ? "border-primary" : "border-[#9910FB]",
+    primaryText: isMpesa ? "text-primary" : "text-[#9910FB]",
     tabActive: isMpesa 
       ? "bg-primary text-primary-foreground" 
-      : "bg-blue-600 text-white",
+      : "bg-[#9910FB] text-white",
     tabInactive: isMpesa 
       ? "bg-muted text-muted-foreground hover:bg-muted/80" 
-      : "bg-blue-50 text-blue-800 hover:bg-blue-100",
+      : "bg-purple-50 text-[#9910FB] hover:bg-purple-100",
     frequencyActive: isMpesa 
       ? "bg-primary text-primary-foreground" 
-      : "bg-blue-600 text-white",
+      : "bg-[#9910FB] text-white",
     buttonGradient: isMpesa 
       ? "btn-donate-gradient" 
-      : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600",
+      : "bg-gradient-to-r from-[#9910FB] to-[#7A0BDA] hover:from-[#7A0BDA] hover:to-[#9910FB]",
     amountSelected: isMpesa 
       ? "border-primary bg-primary text-primary-foreground" 
-      : "border-blue-600 bg-blue-600 text-white",
+      : "border-[#9910FB] bg-[#9910FB] text-white",
     amountHover: isMpesa 
       ? "hover:border-primary" 
-      : "hover:border-blue-600",
+      : "hover:border-[#9910FB]",
     customAmountSelected: isMpesa 
       ? "border-primary bg-primary text-primary-foreground" 
-      : "border-blue-600 bg-blue-600 text-white",
+      : "border-[#9910FB] bg-[#9910FB] text-white",
     activeTabBorder: isMpesa 
       ? "border-b-2 border-primary" 
-      : "border-b-2 border-blue-600",
+      : "border-b-2 border-[#9910FB]",
   };
 
   // Amount options based on currency
