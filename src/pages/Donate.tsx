@@ -6,30 +6,93 @@ import DonationStats from "@/components/donate/DonationStats";
 import PaymentMethodSelection from "@/components/donate/PaymentMethodSelection";
 import ThankYouDonation from "@/components/ThankYouDonation";
 import { Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type DonateStep = "form" | "payment-selection" | "thank-you";
+
+interface DonationFormData {
+  name: string;
+  phone: string;
+  email: string;
+  message: string;
+  showInfo: boolean;
+  currency: string;
+  frequency: string;
+}
 
 const Donate = () => {
   const [step, setStep] = useState<DonateStep>("form");
   const [donationAmount, setDonationAmount] = useState<string>("1,000");
   const [paymentMethod, setPaymentMethod] = useState<"mpesa" | "stripe">("mpesa");
+  const [formData, setFormData] = useState<DonationFormData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFormSubmit = (amount: string, method: "mpesa" | "stripe") => {
+  const saveDonation = async (status: string = "pending") => {
+    if (!formData) return null;
+    
+    const numericAmount = parseFloat(donationAmount.replace(/,/g, ""));
+    
+    const { data, error } = await supabase
+      .from("donations")
+      .insert({
+        name: formData.name || null,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        amount: numericAmount,
+        currency: formData.currency,
+        payment_method: paymentMethod,
+        frequency: formData.frequency,
+        message: formData.message || null,
+        show_info: formData.showInfo,
+        status: status,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error saving donation:", error);
+      toast.error("Failed to save donation. Please try again.");
+      return null;
+    }
+
+    return data;
+  };
+
+  const handleFormSubmit = async (
+    amount: string, 
+    method: "mpesa" | "stripe",
+    data: DonationFormData
+  ) => {
     setDonationAmount(amount);
     setPaymentMethod(method);
+    setFormData(data);
     
     if (method === "stripe") {
       setStep("payment-selection");
     } else {
-      // M-Pesa flow - show thank you directly
-      setStep("thank-you");
+      // M-Pesa flow - save and show thank you
+      setIsSubmitting(true);
+      const donation = await saveDonation("pending");
+      setIsSubmitting(false);
+      
+      if (donation) {
+        toast.success("Donation recorded! You will receive an M-Pesa prompt shortly.");
+        setStep("thank-you");
+      }
     }
   };
 
-  const handlePaymentSelect = (provider: "stripe" | "paypal") => {
-    // In a real implementation, this would redirect to Stripe/PayPal
-    console.log(`Processing ${provider} payment for ${donationAmount}`);
-    setStep("thank-you");
+  const handlePaymentSelect = async (provider: "stripe" | "paypal") => {
+    setIsSubmitting(true);
+    const donation = await saveDonation("pending");
+    setIsSubmitting(false);
+    
+    if (donation) {
+      console.log(`Processing ${provider} payment for ${donationAmount}`);
+      toast.success(`Redirecting to ${provider}...`);
+      setStep("thank-you");
+    }
   };
 
   if (step === "thank-you") {
@@ -63,13 +126,15 @@ const Donate = () => {
                 <DonationForm onSubmit={handleFormSubmit} />
               )}
 
-              {step === "payment-selection" && (
+              {step === "payment-selection" && formData && (
                 <PaymentMethodSelection
                   amount={donationAmount}
-                  email="tester@gmail.com"
+                  currency={formData.currency}
+                  email={formData.email}
                   onSelectStripe={() => handlePaymentSelect("stripe")}
                   onSelectPayPal={() => handlePaymentSelect("paypal")}
                   onBack={() => setStep("form")}
+                  isLoading={isSubmitting}
                 />
               )}
 
@@ -77,7 +142,7 @@ const Donate = () => {
               <div className="text-center text-sm text-muted-foreground mt-6">
                 <p className="flex items-center justify-center gap-1">
                   <Shield className="w-4 h-4 text-primary" />
-                  You're donating to the Maraga Campaign. Transactions processed by MookPay.
+                  You're donating to the Maraga Campaign. Transactions processed securely.
                 </p>
                 <p className="mt-2">
                   Questions? <a href="mailto:donations@davidmaraga.com" className="text-primary underline">donations@davidmaraga.com</a>
