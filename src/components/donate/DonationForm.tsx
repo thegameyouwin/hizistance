@@ -67,6 +67,9 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
     activeTabBorder: isMpesa 
       ? "border-b-2 border-primary" 
       : "border-b-2 border-[#9910FB]",
+    // Person icon colors
+    personIconBg: isMpesa ? "bg-primary/10" : "bg-[#9910FB]/10",
+    personIconColor: isMpesa ? "text-primary" : "text-[#9910FB]",
   };
 
   // Amount options based on currency
@@ -228,8 +231,8 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           {/* Show My Information Toggle */}
           <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colorClasses.personIconBg}`}>
+                <svg className={`w-4 h-4 ${colorClasses.personIconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
