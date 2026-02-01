@@ -4,9 +4,14 @@ import { Input } from "./ui/input";
 import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { toast } from "@/hooks/use-toast";
+import ThankYouVolunteer from "./ThankYouVolunteer";
 
-const VoterDriveSection = () => {
+interface VoterDriveSectionProps {
+  showThankYou?: boolean;
+}
+
+const VoterDriveSection = ({ showThankYou: initialShowThankYou = false }: VoterDriveSectionProps) => {
+  const [showThankYou, setShowThankYou] = useState(initialShowThankYou);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -45,11 +50,12 @@ const VoterDriveSection = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Thank you for joining!",
-      description: "We'll be in touch soon with volunteer opportunities.",
-    });
+    setShowThankYou(true);
   };
+
+  if (showThankYou) {
+    return <ThankYouVolunteer />;
+  }
 
   return (
     <section className="py-16 md:py-24 gradient-hero">
@@ -257,9 +263,9 @@ const VoterDriveSection = () => {
               <Button 
                 type="submit" 
                 size="lg" 
-                className="w-full gradient-cta text-white font-semibold rounded-lg py-6"
+                className="w-full btn-join-gradient rounded-lg py-6"
               >
-                Join the Voter Drive 🇰🇪
+                Join the Voter Drive 🚀
               </Button>
             </form>
           </div>

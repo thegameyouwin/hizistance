@@ -14,6 +14,11 @@ const Header = () => {
     { label: "Campaign Pillars", href: "/pillars" },
   ];
 
+  const mobileDropdownItems = [
+    { label: "Leadership Profile", href: "/about" },
+    { label: "Campaign Pillars", href: "/pillars" },
+  ];
+
   return (
     <header className="sticky top-0 z-50 bg-background shadow-sm">
       <div className="container mx-auto px-4 lg:px-8">
@@ -125,27 +130,16 @@ const Header = () => {
                 
                 {mobileAboutOpen && (
                   <div className="ml-4 flex flex-col gap-1 pb-2">
-                    <Link
-                      to="/about"
-                      className="text-foreground/70 hover:text-foreground py-2 text-base"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Maraga's Moments
-                    </Link>
-                    <Link
-                      to="/about"
-                      className="text-foreground/70 hover:text-foreground py-2 text-base"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Leadership Profile
-                    </Link>
-                    <Link
-                      to="/pillars"
-                      className="text-foreground/70 hover:text-foreground py-2 text-base"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Campaign Pillars
-                    </Link>
+                    {mobileDropdownItems.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        className="text-foreground/70 hover:text-foreground py-2 text-base"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>

@@ -53,10 +53,14 @@
     --campaign-red: 0 72% 51%;
     --campaign-red-dark: 0 72% 45%;
     --campaign-gold: 45 93% 47%;
+    --campaign-blue: 210 100% 35%;
 
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(152 70% 32%) 0%, hsl(152 75% 25%) 100%);
     --gradient-cta: linear-gradient(90deg, hsl(0 72% 45%) 0%, hsl(0 72% 51%) 50%, hsl(45 93% 47%) 100%);
+    --gradient-join: linear-gradient(90deg, hsl(210 100% 35%) 0%, hsl(180 70% 40%) 50%, hsl(152 70% 32%) 100%);
+    --gradient-stripe: linear-gradient(135deg, hsl(270 70% 55%) 0%, hsl(280 80% 60%) 100%);
+    --gradient-paypal: linear-gradient(135deg, hsl(210 100% 40%) 0%, hsl(200 100% 50%) 100%);
 
     /* Shadows */
     --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.08), 0 4px 16px -4px hsl(0 0% 0% / 0.08);
@@ -136,6 +140,18 @@
     background: var(--gradient-cta);
   }
 
+  .gradient-join {
+    background: var(--gradient-join);
+  }
+
+  .gradient-stripe {
+    background: var(--gradient-stripe);
+  }
+
+  .gradient-paypal {
+    background: var(--gradient-paypal);
+  }
+
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
@@ -151,6 +167,30 @@
 
   .btn-donate {
     @apply bg-accent text-accent-foreground hover:bg-accent/90 transition-all duration-200;
+  }
+
+  .btn-join-gradient {
+    background: var(--gradient-join);
+    @apply text-white font-semibold transition-all duration-300;
+    background-size: 200% 100%;
+    background-position: left center;
+  }
+
+  .btn-join-gradient:hover {
+    background-position: right center;
+    @apply shadow-lg;
+  }
+
+  .btn-donate-gradient {
+    background: var(--gradient-hero);
+    @apply text-white font-semibold transition-all duration-300;
+    background-size: 200% 100%;
+    background-position: left center;
+  }
+
+  .btn-donate-gradient:hover {
+    background-position: right center;
+    @apply shadow-lg;
   }
 
   /* Section backgrounds */
