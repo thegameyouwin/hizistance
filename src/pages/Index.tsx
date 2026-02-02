@@ -1,5 +1,7 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
+import LatestPressSection from "@/components/LatestPressSection";
+import LeadershipSection from "@/components/LeadershipSection";
 import CriticalIssuesSection from "@/components/CriticalIssuesSection";
 import YouTubeSection from "@/components/YouTubeSection";
 import VoterDriveSection from "@/components/VoterDriveSection";
@@ -12,6 +14,8 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
+        <LatestPressSection />
+        <LeadershipSection />
         <CriticalIssuesSection />
         <YouTubeSection />
         <VoterDriveSection />
