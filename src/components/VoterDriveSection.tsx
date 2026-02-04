@@ -145,7 +145,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
   return (
     <section id="join" className="py-16 bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
+        <div className="w-full lg:w-4/5 mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <span className="inline-block px-4 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full mb-4">
@@ -316,7 +316,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
                 type="submit" 
                 size="lg" 
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full btn-voter-drive text-white rounded-lg py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {isSubmitting ? (
                   <>
@@ -324,7 +324,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
                     Submitting...
                   </>
                 ) : (
-                  "Join the Movement 🚀"
+                  "Join the Voter Drive 🚀"
                 )}
               </Button>
             </form>
