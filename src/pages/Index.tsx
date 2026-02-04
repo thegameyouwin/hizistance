@@ -13,9 +13,9 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <LatestPressSection />
-        <YouTubeSection />
         <CriticalIssuesSection />
+        <YouTubeSection />
+        <LatestPressSection />
         <LeadershipSection />
         <VoterDriveSection />
       </main>
