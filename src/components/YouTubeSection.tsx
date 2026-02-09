@@ -1,4 +1,4 @@
-import { Youtube, ExternalLink } from "lucide-react";
+import { Youtube, ExternalLink, Calendar, Play } from "lucide-react";
 import { Button } from "./ui/button";
 
 const YouTubeSection = () => {
@@ -8,21 +8,27 @@ const YouTubeSection = () => {
       title: "UGJA Party Young Aspirants Convention in Kakamega County",
       description: "The youth took to the stage for a vibrant and groundbreaking youth convention.",
       date: "October 2, 2024",
-      thumbnail: null,
+      youtubeId: "D-nmIF1JcL4",
+      thumbnail: "https://img.youtube.com/vi/D-nmIF1JcL4/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=D-nmIF1JcL4"
     },
     {
       id: 2,
       title: "The Clarion Caravan is coming to your county",
       description: "Join us as we bring the message of hope and change across Kenya.",
       date: "September 2024",
-      thumbnail: null,
+      youtubeId: "JS6rAgjfezA",
+      thumbnail: "https://img.youtube.com/vi/JS6rAgjfezA/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=JS6rAgjfezA"
     },
     {
       id: 3,
       title: "UGJA Party Young Aspirants Convention Media Address",
       description: "Key takeaways from the historic UGJA Youth Wing gathering.",
       date: "October 4, 2024",
-      thumbnail: null,
+      youtubeId: "ZCCvKoanKIg",
+      thumbnail: "https://img.youtube.com/vi/ZCCvKoanKIg/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=ZCCvKoanKIg"
     },
   ];
 
@@ -50,30 +56,46 @@ const YouTubeSection = () => {
           {videos.map((video) => (
             <div 
               key={video.id}
-              className="bg-card rounded-xl overflow-hidden shadow-card group cursor-pointer"
+              className="bg-card rounded-xl overflow-hidden shadow-card group cursor-pointer hover:shadow-card-hover transition-shadow duration-300"
             >
-              {/* Thumbnail */}
-              <div className="aspect-video bg-gradient-to-br from-primary/30 to-primary/50 relative flex items-center justify-center">
-                <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></div>
+              {/* Thumbnail with Play Button */}
+              <div className="aspect-video relative overflow-hidden">
+                <img 
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <div className="w-16 h-16 bg-accent/90 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                    <Play className="w-6 h-6 text-white fill-white ml-1" />
+                  </div>
+                </div>
+                <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                  YouTube
                 </div>
               </div>
 
               {/* Content */}
               <div className="p-4">
-                <p className="text-xs text-muted-foreground mb-2">{video.date}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                  <Calendar className="w-3 h-3" />
+                  <span>{video.date}</span>
+                </div>
                 <h4 className="font-semibold text-card-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                   {video.title}
                 </h4>
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                   {video.description}
                 </p>
                 <a 
-                  href="#" 
-                  className="inline-flex items-center gap-1 text-sm text-primary font-medium mt-3 hover:underline"
+                  href={video.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary font-medium hover:underline group/link"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   Watch on YouTube
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 transition-transform" />
                 </a>
               </div>
             </div>
@@ -85,7 +107,7 @@ const YouTubeSection = () => {
           <Button
             asChild
             size="lg"
-            className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8"
+            className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 group"
           >
             <a 
               href="https://youtube.com" 
@@ -95,9 +117,12 @@ const YouTubeSection = () => {
             >
               <Youtube className="w-5 h-5" />
               Subscribe to our channel
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </a>
           </Button>
+          <p className="text-primary-foreground/60 text-sm mt-3">
+            Join over 10,000 subscribers for the latest updates
+          </p>
         </div>
       </div>
     </section>
