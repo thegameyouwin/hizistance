@@ -14,13 +14,15 @@ import {
   TrendingUp,
   UserPlus,
   CreditCard,
-  Key
+  Key,
+  ShieldCheck
 } from "lucide-react";
 import maragaLogo from "@/assets/maraga-logo.png";
 import AdminDonations from "@/components/admin/AdminDonations";
 import AdminVolunteers from "@/components/admin/AdminVolunteers";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AdminSiteContent from "@/components/admin/AdminSiteContent";
+import AdminDonationVerification from "@/components/admin/AdminDonationVerification";
 
 interface DashboardStats {
   totalDonations: number;
@@ -171,10 +173,14 @@ const AdminDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="donations" className="space-y-4">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5">
+          <TabsList className="grid w-full max-w-3xl grid-cols-6">
             <TabsTrigger value="donations" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
               <span className="hidden sm:inline">Donations</span>
+            </TabsTrigger>
+            <TabsTrigger value="verification" className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Verify</span>
             </TabsTrigger>
             <TabsTrigger value="volunteers" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -196,6 +202,20 @@ const AdminDashboard = () => {
 
           <TabsContent value="donations">
             <AdminDonations />
+          </TabsContent>
+
+          <TabsContent value="verification">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Verification</CardTitle>
+                <CardDescription>
+                  Review and verify manual M-Pesa payments (transaction codes &amp; screenshots)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminDonationVerification />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="volunteers">

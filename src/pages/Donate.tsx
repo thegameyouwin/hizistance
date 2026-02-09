@@ -4,12 +4,13 @@ import Footer from "@/components/Footer";
 import DonationForm from "@/components/donate/DonationForm";
 import DonationStats from "@/components/donate/DonationStats";
 import PaymentMethodSelection from "@/components/donate/PaymentMethodSelection";
+import ManualPaymentForm from "@/components/donate/ManualPaymentForm";
 import ThankYouDonation from "@/components/ThankYouDonation";
 import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type DonateStep = "form" | "payment-selection" | "thank-you";
+type DonateStep = "form" | "payment-selection" | "manual-payment" | "thank-you";
 
 interface DonationFormData {
   name: string;
@@ -27,6 +28,7 @@ const Donate = () => {
   const [paymentMethod, setPaymentMethod] = useState<"mpesa" | "stripe">("mpesa");
   const [formData, setFormData] = useState<DonationFormData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentDonationId, setCurrentDonationId] = useState<string | null>(null);
 
   const saveDonation = async (status: string = "pending") => {
     if (!formData) return null;
@@ -71,27 +73,13 @@ const Donate = () => {
     if (method === "stripe") {
       setStep("payment-selection");
     } else {
-      // M-Pesa flow
+      // M-Pesa flow - save donation then go to manual payment
       setIsSubmitting(true);
       const donation = await saveDonation("pending");
       
       if (donation) {
-        // Call M-Pesa edge function
-        const numericAmount = parseFloat(amount.replace(/,/g, ""));
-        const { data: mpesaData, error } = await supabase.functions.invoke("mpesa-payment", {
-          body: {
-            donationId: donation.id,
-            amount: numericAmount,
-            phone: data.phone,
-          },
-        });
-
-        if (error) {
-          toast.error("M-Pesa payment initiation failed. Please try again.");
-        } else if (mpesaData?.instructions) {
-          toast.success("Please complete your M-Pesa payment using the instructions provided.");
-          setStep("thank-you");
-        }
+        setCurrentDonationId(donation.id);
+        setStep("manual-payment");
       }
       setIsSubmitting(false);
     }
@@ -181,6 +169,16 @@ const Donate = () => {
             <div>
               {step === "form" && (
                 <DonationForm onSubmit={handleFormSubmit} />
+              )}
+
+              {step === "manual-payment" && currentDonationId && formData && (
+                <ManualPaymentForm
+                  donationId={currentDonationId}
+                  amount={donationAmount}
+                  currency={formData.currency}
+                  onComplete={() => setStep("thank-you")}
+                  onBack={() => setStep("form")}
+                />
               )}
 
               {step === "payment-selection" && formData && (

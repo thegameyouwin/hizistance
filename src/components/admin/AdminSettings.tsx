@@ -18,6 +18,9 @@ interface AdminSettingsProps {
 }
 
 const paymentKeys = [
+  "ncba_paybill",
+  "ncba_account_number",
+  "ncba_bank_name",
   "mpesa_paybill",
   "mpesa_account",
   "stripe_publishable_key",
@@ -31,6 +34,7 @@ const generalKeys = [
   "hero_title",
   "hero_subtitle",
   "donation_cta",
+  "payment_instructions",
 ];
 
 const AdminSettings = ({ settingsFilter }: AdminSettingsProps) => {

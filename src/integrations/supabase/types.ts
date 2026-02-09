@@ -43,6 +43,7 @@ export type Database = {
       }
       donations: {
         Row: {
+          admin_notes: string | null
           amount: number
           created_at: string
           currency: string
@@ -53,11 +54,17 @@ export type Database = {
           name: string | null
           payment_method: string
           phone: string | null
+          screenshot_url: string | null
           show_info: boolean | null
           status: string
+          transaction_code: string | null
           transaction_id: string | null
+          verification_type: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          admin_notes?: string | null
           amount: number
           created_at?: string
           currency?: string
@@ -68,11 +75,17 @@ export type Database = {
           name?: string | null
           payment_method: string
           phone?: string | null
+          screenshot_url?: string | null
           show_info?: boolean | null
           status?: string
+          transaction_code?: string | null
           transaction_id?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          admin_notes?: string | null
           amount?: number
           created_at?: string
           currency?: string
@@ -83,9 +96,14 @@ export type Database = {
           name?: string | null
           payment_method?: string
           phone?: string | null
+          screenshot_url?: string | null
           show_info?: boolean | null
           status?: string
+          transaction_code?: string | null
           transaction_id?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
