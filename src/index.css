@@ -19,13 +19,13 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    /* Primary: Kenyan Green - Light */
-    --primary: 152 50% 50%;
+    /* Primary: Kenyan Green - #03A63C */
+    --primary: 149 95% 33%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Light green tint */
-    --secondary: 152 40% 97%;
-    --secondary-foreground: 152 50% 40%;
+    --secondary: 149 40% 97%;
+    --secondary-foreground: 149 95% 28%;
 
     /* Muted: Soft gray */
     --muted: 210 20% 96%;
@@ -42,23 +42,23 @@
     /* UI */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 152 70% 32%;
+    --ring: 149 95% 33%;
 
     --radius: 0.5rem;
 
     /* Campaign specific */
-    --campaign-green: 152 50% 50%;
-    --campaign-green-dark: 152 55% 42%;
-    --campaign-green-light: 152 45% 60%;
+    --campaign-green: 149 95% 33%;
+    --campaign-green-dark: 149 95% 26%;
+    --campaign-green-light: 149 70% 45%;
     --campaign-red: 0 72% 51%;
     --campaign-red-dark: 0 72% 45%;
     --campaign-gold: 45 93% 55%;
     --campaign-blue: 210 100% 35%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(152 50% 48%) 0%, hsl(152 55% 40%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(149 95% 33%) 0%, hsl(149 95% 26%) 100%);
     --gradient-cta: linear-gradient(90deg, hsl(0 72% 45%) 0%, hsl(0 72% 51%) 50%, hsl(45 93% 47%) 100%);
-    --gradient-join: linear-gradient(90deg, hsl(210 100% 35%) 0%, hsl(180 70% 40%) 50%, hsl(152 70% 32%) 100%);
+    --gradient-join: linear-gradient(90deg, hsl(210 100% 35%) 0%, hsl(180 70% 40%) 50%, hsl(149 95% 33%) 100%);
     --gradient-stripe: linear-gradient(135deg, hsl(270 70% 55%) 0%, hsl(280 80% 60%) 100%);
     --gradient-paypal: linear-gradient(135deg, hsl(210 100% 40%) 0%, hsl(200 100% 50%) 100%);
 
