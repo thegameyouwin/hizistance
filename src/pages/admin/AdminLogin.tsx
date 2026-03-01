@@ -30,7 +30,7 @@ const AdminLogin = () => {
         return;
       }
 
-      navigate("/dashboard");
+      navigate("/admin/dashboard");
     } catch (err) {
       setError("An unexpected error occurred");
     } finally {

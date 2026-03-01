@@ -20,35 +20,34 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
-const MainSiteRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Index />} />
-    <Route path="/about" element={<About />} />
-    <Route path="/pillars" element={<Pillars />} />
-    <Route path="/press" element={<Press />} />
-    <Route path="/join" element={<Join />} />
-    <Route path="/donate" element={<Donate />} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
-
-const AdminRoutes = () => (
-  <Routes>
-    <Route path="/" element={<AdminLogin />} />
-    <Route path="/login" element={<AdminLogin />} />
-    <Route path="/dashboard" element={<AdminDashboard />} />
-    <Route path="*" element={<AdminLogin />} />
-  </Routes>
-);
-
 const AppContent = () => {
   const subdomain = useSubdomain();
 
   if (subdomain === "admin") {
-    return <AdminRoutes />;
+    return (
+      <Routes>
+        <Route path="/" element={<AdminLogin />} />
+        <Route path="/login" element={<AdminLogin />} />
+        <Route path="/dashboard" element={<AdminDashboard />} />
+        <Route path="*" element={<AdminLogin />} />
+      </Routes>
+    );
   }
 
-  return <MainSiteRoutes />;
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/pillars" element={<Pillars />} />
+      <Route path="/press" element={<Press />} />
+      <Route path="/join" element={<Join />} />
+      <Route path="/donate" element={<Donate />} />
+      <Route path="/admin" element={<AdminLogin />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
 };
 
 const App = () => (

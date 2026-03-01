@@ -38,7 +38,7 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    if (!isLoading && (!user || !isAdmin)) navigate("/login");
+    if (!isLoading && (!user || !isAdmin)) navigate("/admin/login");
   }, [user, isAdmin, isLoading, navigate]);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ const AdminDashboard = () => {
     if (user && isAdmin) fetchStats();
   }, [user, isAdmin]);
 
-  const handleSignOut = async () => { await signOut(); navigate("/login"); };
+  const handleSignOut = async () => { await signOut(); navigate("/admin/login"); };
 
   if (isLoading) {
     return (
