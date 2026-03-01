@@ -13,7 +13,7 @@ const HeroSection = ({ maragaImage }: HeroSectionProps) => {
         <div className="grid md:grid-cols-2 gap-8 items-center">
           {/* Left Content */}
           <div className="text-primary-foreground">
-            <div className="inline-block px-3 py-1 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full text-sm mb-6">
+            <div className="inline-block px-3 py-1 bg-primary-foreground/10 border border-primary-foreground/20 text-sm mb-6">
               Presidential Candidate 2027
             </div>
             
@@ -33,10 +33,10 @@ const HeroSection = ({ maragaImage }: HeroSectionProps) => {
             </p>
             
             <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="btn-movement bg-primary-foreground text-primary hover:bg-primary-foreground/90 rounded-full px-8">
+              <Button asChild size="lg" className="btn-movement bg-primary-foreground text-primary hover:bg-primary-foreground/90 px-8">
                 <Link to="/join">Join the Movement</Link>
               </Button>
-              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-8">
+              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-8">
                 <Link to="/donate">Contribute Now</Link>
               </Button>
             </div>
@@ -44,7 +44,7 @@ const HeroSection = ({ maragaImage }: HeroSectionProps) => {
 
           {/* Right Content - Candidate Card */}
           <div className="flex justify-center md:justify-end">
-            <div className="bg-card rounded-2xl shadow-elevated overflow-hidden max-w-sm">
+            <div className="bg-card shadow-elevated overflow-hidden max-w-sm">
               {/* Maraga Image */}
               <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center relative overflow-hidden">
                 <img 

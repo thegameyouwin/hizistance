@@ -5,7 +5,7 @@ const JoinMovementCTA = () => {
   return (
     <section className="py-16 md:py-24 bg-secondary">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto text-center bg-card rounded-2xl shadow-card p-8 md:p-12">
+        <div className="max-w-3xl mx-auto text-center bg-card shadow-card p-8 md:p-12">
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-4">
             Join Our Movement!
           </h2>
@@ -20,7 +20,7 @@ const JoinMovementCTA = () => {
               asChild 
               size="lg" 
               variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-8"
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8"
             >
               <Link to="/join">Volunteer With Us</Link>
             </Button>
@@ -28,7 +28,7 @@ const JoinMovementCTA = () => {
             <Button 
               asChild 
               size="lg" 
-              className="btn-donate rounded-full px-8"
+              className="btn-donate px-8"
             >
               <Link to="/donate">Donate Now</Link>
             </Button>

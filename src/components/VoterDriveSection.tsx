@@ -148,7 +148,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
         <div className="w-full lg:w-4/5 mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <span className="inline-block px-4 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full mb-4">
+            <span className="inline-block px-4 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium mb-4">
               🇰🇪 Join Our Movement
             </span>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-3">
@@ -160,7 +160,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
           </div>
 
           {/* Form */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 md:p-8">
+          <div className="bg-white shadow-lg border border-gray-100 p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information */}
               <div>
@@ -271,7 +271,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
                   {interests.map((interest) => (
                     <label 
                       key={interest}
-                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-emerald-50/50 transition-colors group"
+                      className="flex items-center gap-3 p-3 border border-gray-200 cursor-pointer hover:bg-emerald-50/50 transition-colors group"
                     >
                       <Checkbox
                         checked={formData.interests.includes(interest)}
@@ -301,7 +301,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
               </div>
 
               {/* Terms */}
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="p-4 bg-gray-50 border border-gray-200">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <Checkbox required className="mt-1" />
                   <div className="text-sm text-gray-600">
@@ -316,7 +316,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
                 type="submit" 
                 size="lg" 
                 disabled={isSubmitting}
-                className="w-full btn-voter-drive text-white rounded-lg py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full btn-voter-drive text-white py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {isSubmitting ? (
                   <>
