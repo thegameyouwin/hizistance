@@ -15,19 +15,20 @@ interface DonationTotals {
 }
 
 const DonationStats = () => {
+  // Default “starts” values
   const [stats, setStats] = useState<DonationTotals>({
     total: 7814950,
     donations: 2003,
-    donors: 1680, // sum of unique donors
+    donors: 1680,
     byMethod: {
       mpesa: { amount: 591096, donations: 1929, donors: 1643 },
       stripe: { amount: 82891, donations: 30, donors: 24 },
       paypal: { amount: 28313, donations: 13, donors: 13 },
-      direct: { amount: 7112650, donations: 31, donors: 0 }, // direct paybill
+      direct: { amount: 7112650, donations: 31, donors: 0 },
     },
   });
 
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({
+  const [exchangeRates] = useState<Record<string, number>>({
     AUD: 84,
     CAD: 92,
     CHF: 160,
@@ -36,7 +37,7 @@ const DonationStats = () => {
     EUR: 149,
   });
 
-  // Supabase realtime updates
+  // Fetch from Supabase and subscribe to updates
   useEffect(() => {
     const fetchStats = async () => {
       const { data } = await supabase
@@ -44,7 +45,7 @@ const DonationStats = () => {
         .select("amount, payment_method, email, status")
         .eq("status", "completed");
 
-      if (data) {
+      if (data && data.length > 0) {
         const totals: DonationTotals = {
           total: 0,
           donations: 0,
@@ -75,11 +76,9 @@ const DonationStats = () => {
               ? (donation.payment_method as keyof typeof totals.byMethod)
               : "direct";
 
-          if (totals.byMethod[method]) {
-            totals.byMethod[method].amount += Number(donation.amount);
-            totals.byMethod[method].donations++;
-            if (donation.email) methodEmails[method].add(donation.email);
-          }
+          totals.byMethod[method].amount += Number(donation.amount);
+          totals.byMethod[method].donations++;
+          if (donation.email) methodEmails[method].add(donation.email);
         });
 
         totals.donors = uniqueEmails.size;
@@ -90,6 +89,7 @@ const DonationStats = () => {
 
         setStats(totals);
       }
+      // else: keep default values
     };
 
     fetchStats();
@@ -143,7 +143,7 @@ const DonationStats = () => {
           <p className="text-sm text-primary">Real-time updates</p>
         </div>
 
-        {/* Payment Methods Stats */}
+        {/* Payment Methods */}
         <div className="space-y-3">
           {paymentMethods.map((method) => (
             <div key={method.id} className="border border-border rounded-lg p-4">
