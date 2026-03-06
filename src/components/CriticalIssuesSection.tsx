@@ -4,57 +4,81 @@ import { Button } from "./ui/button";
 
 const CriticalIssuesSection = () => {
   const featuredStatement = {
-    date: "13 December 2024",
+    date: "12 December 2025",
     tag: "Official Statement",
-    title: "Kenya Is Not on the Road to Singapore. Pretending Otherwise Is Dangerous",
-    excerpt: "We are not poor because we lack money. We are poor because we have embraced an extractive system that is designed to serve those in power before it serves citizens.",
-    link: "#"
+    title:
+      "Kenya Is Not on the Road to Singapore. Pretending Otherwise Is Dangerous",
+    excerpt:
+      "We are not poor because we lack money. We are poor because we have embraced an extractive system that is designed to serve those in power before it serves citizens.",
+    link: "#",
   };
 
   return (
-    <section className="py-16 md:py-24 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary mb-4">
-            <span className="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
-            <span className="text-sm font-medium text-secondary-foreground">Latest Update</span>
+    <section className="py-20 md:py-28 bg-[#0ea44b]">
+      <div className="container mx-auto px-6">
+
+        {/* HEADER */}
+        <div className="text-center mb-14">
+
+          <div className="inline-block px-4 py-1.5 rounded-full bg-white/20 text-white text-sm mb-6">
+            Latest Communication
           </div>
-          
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-4">
+
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Our Voice on Critical Issues
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Stay informed with our latest positions on the issues that matter most to Kenyans.
+
+          <p className="text-white/90 max-w-2xl mx-auto text-lg">
+            Stay informed with our latest positions on the issues that matter
+            most to Kenya
           </p>
+
         </div>
 
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-card shadow-card border border-border overflow-hidden">
-            <div className="p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-medium">
-                  {featuredStatement.tag}
-                </span>
-                <span className="text-sm text-muted-foreground">{featuredStatement.date}</span>
-              </div>
+        {/* CARD */}
+        <div className="max-w-5xl mx-auto">
 
-              <h3 className="text-xl md:text-2xl font-heading font-bold text-primary mb-4">
-                {featuredStatement.title}
-              </h3>
+          <div className="bg-[#f3f4f6] rounded-2xl shadow-xl p-8 md:p-10">
 
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                {featuredStatement.excerpt}
-              </p>
+            {/* TAG + DATE */}
+            <div className="flex justify-between items-center mb-6">
 
-              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                <Link to={featuredStatement.link} className="flex items-center gap-2">
-                  Read Complete Statement
-                  <ExternalLink className="w-4 h-4" />
-                </Link>
-              </Button>
+              <span className="px-4 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-full">
+                {featuredStatement.tag}
+              </span>
+
+              <span className="text-sm text-gray-500">
+                {featuredStatement.date}
+              </span>
+
             </div>
+
+            {/* TITLE */}
+            <h3 className="text-2xl md:text-3xl font-bold text-green-700 mb-6 leading-snug">
+              {featuredStatement.title}
+            </h3>
+
+            {/* TEXT */}
+            <p className="text-gray-600 mb-8 text-lg leading-relaxed max-w-3xl">
+              {featuredStatement.excerpt}
+            </p>
+
+            {/* BUTTON */}
+            <Button
+              asChild
+              size="lg"
+              className="bg-green-700 hover:bg-green-800 text-white px-6"
+            >
+              <Link to={featuredStatement.link} className="flex items-center gap-2">
+                READ COMPLETE STATEMENT
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+            </Button>
+
           </div>
+
         </div>
+
       </div>
     </section>
   );
