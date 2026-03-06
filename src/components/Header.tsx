@@ -51,7 +51,7 @@ const Header = () => {
               <Link to="/join">Join Our Movement</Link>
             </Button>
             <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-2 text-sm font-semibold uppercase tracking-wider">
-              <Link to="/donate">Contribute Now</Link>
+              <Link to="/donate">Donate</Link>
             </Button>
           </div>
 
