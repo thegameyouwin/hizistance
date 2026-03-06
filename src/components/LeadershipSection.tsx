@@ -4,60 +4,127 @@ import { ArrowRight } from "lucide-react";
 import maragaHero from "@/assets/maraga-hero.png";
 
 const pillars = [
-  { number: 1, title: "Justice & Rule of Law", description: "Committed to upholding the constitution and ensuring justice for all Kenyans" },
-  { number: 2, title: "Transparency & Accountability", description: "Promoting open government and holding leaders accountable to the people" },
-  { number: 3, title: "Inclusive Development", description: "Building a Kenya where every citizen has equal opportunities to succeed" }
+  {
+    number: 1,
+    title: "Justice & Rule of Law",
+    description:
+      "Committed to upholding the constitution and ensuring justice for all Kenyans",
+  },
+  {
+    number: 2,
+    title: "Transparency & Accountability",
+    description:
+      "Promoting open government and holding leaders accountable to the people",
+  },
+  {
+    number: 3,
+    title: "Inclusive Development",
+    description:
+      "Building a Kenya where every citizen has equal opportunities to succeed",
+  },
 ];
 
 const LeadershipSection = () => {
   return (
-    <section className="py-16 md:py-24 bg-amber-50/80">
-      <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+    <section className="py-20 md:py-28 bg-[#e4d2a8]">
+      <div className="container mx-auto px-6">
+
+        <div className="grid lg:grid-cols-2 gap-14 items-center">
+
+          {/* IMAGE */}
           <div className="relative">
-            <div className="overflow-hidden shadow-elevated">
-              <img src={maragaHero} alt="David Maraga" className="w-full h-auto object-cover" />
+
+            <div className="rounded-2xl overflow-hidden shadow-xl">
+              <img
+                src={maragaHero}
+                alt="David Maraga"
+                className="w-full h-[520px] object-cover"
+              />
             </div>
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 md:bottom-6 bg-primary text-primary-foreground px-8 py-4 shadow-lg text-center">
-              <p className="text-3xl font-bold">2027</p>
-              <p className="text-sm font-medium">Presidential Candidate</p>
+
+            {/* FLOATING 2027 CARD */}
+            <div className="absolute bottom-6 right-6 bg-green-600 text-white px-8 py-5 rounded-xl shadow-lg text-center">
+              <p className="text-2xl font-bold">2027</p>
+              <p className="text-sm">Presidential Candidate</p>
             </div>
+
           </div>
 
+          {/* CONTENT */}
           <div>
-            <span className="inline-block px-4 py-1.5 bg-primary text-primary-foreground text-sm font-medium mb-4">Leadership</span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">David Maraga 2027</h2>
-            <p className="text-xl text-muted-foreground italic mb-8">Reset. Restore. Rebuild.</p>
 
-            <div className="space-y-4 mb-8">
+            {/* Badge */}
+            <span className="inline-block px-4 py-1.5 rounded-full bg-green-600 text-white text-sm mb-5">
+              Leadership
+            </span>
+
+            {/* Title */}
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+              David Maraga 2027
+            </h2>
+
+            <p className="text-lg text-gray-600 mb-10">
+              Reset. Restore. Rebuild.
+            </p>
+
+            {/* PILLARS */}
+            <div className="space-y-4 mb-10">
+
               {pillars.map((pillar) => (
-                <div key={pillar.number} className="bg-card border border-border p-4 shadow-card">
-                  <div className="flex items-start gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                      {pillar.number}
-                    </span>
-                    <div>
-                      <h4 className="font-heading font-bold text-foreground mb-1">{pillar.title}</h4>
-                      <p className="text-sm text-muted-foreground">{pillar.description}</p>
-                    </div>
+                <div
+                  key={pillar.number}
+                  className="bg-gray-100 rounded-xl p-5 flex items-start gap-4 shadow-sm"
+                >
+
+                  {/* Number Circle */}
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white font-bold text-sm">
+                    {pillar.number}
                   </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      {pillar.title}
+                    </h4>
+
+                    <p className="text-gray-600 text-sm">
+                      {pillar.description}
+                    </p>
+                  </div>
+
                 </div>
               ))}
+
             </div>
 
+            {/* BUTTONS */}
             <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 px-8">
+
+              <Button
+                asChild
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-white px-8"
+              >
                 <Link to="/about" className="flex items-center gap-2">
-                  LEARN MORE ABOUT MARAGA <ArrowRight className="w-4 h-4" />
+                  LEARN MORE ABOUT MARAGA
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 px-8">
+
+              <Button
+                asChild
+                size="lg"
+                className="bg-gray-100 hover:bg-gray-200 text-green-700 px-8"
+              >
                 <Link to="/pillars" className="flex items-center gap-2">
-                  CAMPAIGN PILLARS <ArrowRight className="w-4 h-4" />
+                  CAMPAIGN PILLARS
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
+
             </div>
+
           </div>
+
         </div>
       </div>
     </section>
