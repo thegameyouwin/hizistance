@@ -160,7 +160,7 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
           </div>
 
           {/* Form */}
-          <div className="bg-white shadow-lg border border-gray-100 p-6 md:p-8">
+          <div className="bg-white shadow-2xl border border-gray-100 rounded-xl p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information */}
               <div>
