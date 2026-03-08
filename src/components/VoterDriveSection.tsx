@@ -149,13 +149,13 @@ const VoterDriveSection = ({ showThankYou = false }: VoterDriveSectionProps) => 
           {/* Header */}
           <div className="text-center mb-8">
             <span className="inline-block px-4 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium mb-4">
-              🇰🇪 Join Our Movement
+              Get Involved
             </span>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-3">
-              Become a Volunteer
+              Join Voter Drive
             </h2>
             <p className="text-gray-600">
-              Help us build a stronger Kenya. Join thousands of volunteers working to make a difference.
+              Be part of the change Kenya needs. Your voice and action can help Reset, Restore, and Rebuild our nation.
             </p>
           </div>
 
