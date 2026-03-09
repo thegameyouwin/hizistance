@@ -26,6 +26,7 @@ const AppContent = () => {
   const subdomain = useSubdomain();
   const { isMaintenanceMode, isLoading } = useMaintenanceMode();
 
+  // Admin subdomain routing
   if (subdomain === "admin") {
     return (
       <Routes>
@@ -37,7 +38,7 @@ const AppContent = () => {
     );
   }
 
-  // Show maintenance page for public routes (not admin)
+  // Maintenance mode: block public routes, keep admin accessible
   if (!isLoading && isMaintenanceMode) {
     return (
       <Routes>
@@ -49,6 +50,7 @@ const AppContent = () => {
     );
   }
 
+  // Normal routing
   return (
     <Routes>
       <Route path="/" element={<Index />} />
