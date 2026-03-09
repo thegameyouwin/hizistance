@@ -345,32 +345,36 @@ const AdminDashboard = () => {
                 </Card>
               </div>
 
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("verification")}>
-                      <ShieldCheck className="w-5 h-5 text-primary" />
-                      <span className="text-xs">Verify Payments</span>
-                    </Button>
-                    <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("sms")}>
-                      <MessageSquare className="w-5 h-5 text-primary" />
-                      <span className="text-xs">Send SMS</span>
-                    </Button>
-                    <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("content")}>
-                      <LayoutDashboard className="w-5 h-5 text-primary" />
-                      <span className="text-xs">Manage Goals</span>
-                    </Button>
-                    <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("api-config")}>
-                      <Key className="w-5 h-5 text-primary" />
-                      <span className="text-xs">API Config</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Quick Actions & Maintenance */}
+              <div className="grid lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("verification")}>
+                        <ShieldCheck className="w-5 h-5 text-primary" />
+                        <span className="text-xs">Verify Payments</span>
+                      </Button>
+                      <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("sms")}>
+                        <MessageSquare className="w-5 h-5 text-primary" />
+                        <span className="text-xs">Send SMS</span>
+                      </Button>
+                      <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("content")}>
+                        <LayoutDashboard className="w-5 h-5 text-primary" />
+                        <span className="text-xs">Manage Goals</span>
+                      </Button>
+                      <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" onClick={() => setActiveTab("api-config")}>
+                        <Key className="w-5 h-5 text-primary" />
+                        <span className="text-xs">API Config</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <AdminMaintenanceToggle />
+              </div>
             </div>
           )}
 
