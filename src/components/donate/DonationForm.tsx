@@ -459,7 +459,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
             size="lg" 
             className={`w-full ${colorClasses.buttonGradient} rounded-lg py-6 text-lg`}
           >
-            {paymentMethod === "stripe" ? "Continue to Payment" : "Donate Now"}
+            {paymentMethod === "stripe" ? "Next: Choose Payment Method" : "Donate Now"}
           </Button>
         </form>
       </div>
