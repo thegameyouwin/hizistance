@@ -1,9 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowLeft, CheckCircle, XCircle, Smartphone, Clock } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle, XCircle, Smartphone, Clock, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import maragaLogo from "@/assets/maraga-logo.png";
 
@@ -17,20 +15,26 @@ interface StkPaymentFormProps {
   onFallbackManual: () => void;
 }
 
-type StkStatus = "idle" | "sending" | "waiting" | "completed" | "failed" | "timeout";
+type StkStatus = "idle" | "sending" | "waiting" | "completed" | "failed";
 
 const StkPaymentForm = ({
   donationId, amount, phone, currency, onComplete, onBack, onFallbackManual,
 }: StkPaymentFormProps) => {
   const [status, setStatus] = useState<StkStatus>("idle");
   const [transactionId, setTransactionId] = useState<string | null>(null);
-  const [transactionRequestId, setTransactionRequestId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(60);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+
+  // Refs to prevent double actions
+  const completedRef = useRef(false);
+  const timeoutCalledRef = useRef(false);
 
   const initiateStk = useCallback(async () => {
     setStatus("sending");
     setErrorMessage("");
+    completedRef.current = false;
+    timeoutCalledRef.current = false;
 
     try {
       const numericAmount = parseFloat(amount.replace(/,/g, ""));
@@ -47,7 +51,6 @@ const StkPaymentForm = ({
       if (!data?.success) throw new Error(data?.error || "Failed to initiate payment");
 
       setTransactionId(data.transaction_id);
-      setTransactionRequestId(data.transaction_request_id);
       setStatus("waiting");
       setCountdown(60);
     } catch (err: any) {
@@ -61,18 +64,22 @@ const StkPaymentForm = ({
     initiateStk();
   }, [initiateStk]);
 
-  // Countdown timer
+  // Countdown timer – when it reaches 0, go to thank‑you page
   useEffect(() => {
     if (status !== "waiting") return;
     if (countdown <= 0) {
-      setStatus("timeout");
+      if (!completedRef.current && !timeoutCalledRef.current) {
+        timeoutCalledRef.current = true;
+        completedRef.current = true; // prevent further updates
+        onComplete(); // redirect to thank‑you page
+      }
       return;
     }
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
-  }, [status, countdown]);
+  }, [status, countdown, onComplete]);
 
-  // Realtime subscription for instant updates
+  // Realtime subscription (if enabled)
   useEffect(() => {
     if (status !== "waiting" || !transactionId) return;
 
@@ -88,10 +95,12 @@ const StkPaymentForm = ({
         },
         (payload) => {
           const newStatus = payload.new?.status;
-          if (newStatus === "completed") {
+          if (newStatus === "completed" && !completedRef.current) {
+            completedRef.current = true;
             setStatus("completed");
             setTimeout(onComplete, 2000);
-          } else if (newStatus === "failed") {
+          } else if (newStatus === "failed" && !completedRef.current) {
+            completedRef.current = true;
             setStatus("failed");
             setErrorMessage("Payment was declined or cancelled");
           }
@@ -99,30 +108,118 @@ const StkPaymentForm = ({
       )
       .subscribe();
 
-    // Fallback polling every 5s in case realtime misses
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [status, transactionId, onComplete]);
+
+  // Polling every 3 seconds (fallback)
+  useEffect(() => {
+    if (status !== "waiting" || !transactionId) return;
+
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from("pesaflux_transactions")
         .select("status")
         .eq("id", transactionId)
-        .single();
+        .maybeSingle();
 
-      if (data?.status === "completed") {
+      if (data?.status === "completed" && !completedRef.current) {
+        completedRef.current = true;
         setStatus("completed");
         clearInterval(interval);
         setTimeout(onComplete, 2000);
-      } else if (data?.status === "failed") {
+      } else if (data?.status === "failed" && !completedRef.current) {
+        completedRef.current = true;
         setStatus("failed");
         setErrorMessage("Payment was declined or cancelled");
         clearInterval(interval);
       }
-    }, 5000);
+    }, 3000);
 
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [status, transactionId, onComplete]);
+
+  // Visibility change detection
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible" && status === "waiting" && transactionId && !completedRef.current) {
+        const { data } = await supabase
+          .from("pesaflux_transactions")
+          .select("status")
+          .eq("id", transactionId)
+          .maybeSingle();
+
+        if (data?.status === "completed") {
+          completedRef.current = true;
+          setStatus("completed");
+          setTimeout(onComplete, 2000);
+        } else if (data?.status === "failed") {
+          completedRef.current = true;
+          setStatus("failed");
+          setErrorMessage("Payment was declined or cancelled");
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [status, transactionId, onComplete]);
+
+  // Manual check – also checks donations table as fallback
+  const checkStatusManually = async () => {
+    if (!transactionId || status !== "waiting" || completedRef.current) return;
+
+    setIsChecking(true);
+    try {
+      // Check pesaflux_transactions
+      const { data: txnData, error: txnError } = await supabase
+        .from("pesaflux_transactions")
+        .select("status")
+        .eq("id", transactionId)
+        .maybeSingle();
+
+      if (txnError) throw txnError;
+
+      if (txnData?.status === "completed") {
+        completedRef.current = true;
+        setStatus("completed");
+        setTimeout(onComplete, 2000);
+        return;
+      } else if (txnData?.status === "failed") {
+        completedRef.current = true;
+        setStatus("failed");
+        setErrorMessage("Payment was declined or cancelled");
+        return;
+      }
+
+      // Fallback: check donations table
+      const { data: donationData, error: donationError } = await supabase
+        .from("donations")
+        .select("status")
+        .eq("id", donationId)
+        .maybeSingle();
+
+      if (donationError) throw donationError;
+
+      if (donationData?.status === "completed") {
+        completedRef.current = true;
+        setStatus("completed");
+        setTimeout(onComplete, 2000);
+      } else if (donationData?.status === "failed") {
+        completedRef.current = true;
+        setStatus("failed");
+        setErrorMessage("Payment was declined or cancelled");
+      } else {
+        toast.info("Payment still pending. Please wait a moment.");
+      }
+    } catch (error) {
+      console.error("Manual check error:", error);
+      toast.error("Could not check status. Please try again.");
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   return (
     <div className="bg-card rounded-2xl shadow-card border border-border overflow-hidden">
@@ -161,8 +258,23 @@ const StkPaymentForm = ({
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
               <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-mono font-medium text-foreground">{countdown}s</span>
+              <span className="text-sm font-mono font-medium text-foreground">
+                {countdown > 0 ? `${countdown}s` : "Auto redirecting..."}
+              </span>
             </div>
+            <Button
+              variant="outline"
+              onClick={checkStatusManually}
+              disabled={isChecking}
+              className="mt-2"
+            >
+              {isChecking ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              Check Payment Status
+            </Button>
           </div>
         )}
 
@@ -178,16 +290,12 @@ const StkPaymentForm = ({
         )}
 
         {/* Failed */}
-        {(status === "failed" || status === "timeout") && (
+        {status === "failed" && (
           <div className="text-center py-8 space-y-4">
             <XCircle className="w-16 h-16 text-destructive mx-auto" />
-            <p className="text-lg font-bold text-foreground">
-              {status === "timeout" ? "Request Timed Out" : "Payment Failed"}
-            </p>
+            <p className="text-lg font-bold text-foreground">Payment Failed</p>
             <p className="text-sm text-muted-foreground">
-              {status === "timeout"
-                ? "The payment request expired. You can try again or pay manually."
-                : errorMessage || "Something went wrong. Please try again."}
+              {errorMessage || "Something went wrong. Please try again."}
             </p>
             <div className="flex flex-col gap-3 pt-2">
               <Button onClick={initiateStk} className="w-full">
@@ -201,7 +309,7 @@ const StkPaymentForm = ({
           </div>
         )}
 
-        {/* Idle state (shouldn't normally show) */}
+        {/* Idle state */}
         {status === "idle" && (
           <div className="text-center py-8">
             <Button onClick={initiateStk} size="lg" className="w-full">
@@ -212,7 +320,7 @@ const StkPaymentForm = ({
         )}
 
         {/* Back button (only when not processing) */}
-        {(status === "idle" || status === "failed" || status === "timeout") && (
+        {(status === "idle" || status === "failed") && (
           <button
             onClick={onBack}
             className="w-full py-3 text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2"
