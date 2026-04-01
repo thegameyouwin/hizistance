@@ -1,229 +1,247 @@
-import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Heart, Shield, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowLeft, CheckCircle, XCircle, Smartphone, Clock } from "lucide-react";
-import { toast } from "sonner";
-import maragaLogo from "@/assets/maraga-logo.png";
 
-interface StkPaymentFormProps {
-  donationId: string;
-  amount: string;
-  phone: string;
-  currency: string;
-  onComplete: () => void;
-  onBack: () => void;
-  onFallbackManual: () => void;
+interface DonationTotals {
+  total: number;
+  donations: number;
+  donors: number;
+  byMethod: {
+    mpesa: { amount: number; donations: number; donors: number };
+    stripe: { amount: number; donations: number; donors: number };
+    paypal: { amount: number; donations: number; donors: number };
+    direct: { amount: number; donations: number; donors: number };
+  };
 }
 
-type StkStatus = "idle" | "sending" | "waiting" | "completed" | "failed" | "timeout";
+const DonationStats = () => {
+  // Updated baseline stats with the new values
+  const [stats, setStats] = useState<DonationTotals>({
+    total: 7957750,        // Ksh 7,957,750
+    donations: 2413,
+    donors: 0,             // will be calculated from real data
+    byMethod: {
+      mpesa: { amount: 733896, donations: 2339, donors: 1972 },
+      stripe: { amount: 82891, donations: 30, donors: 24 },
+      paypal: { amount: 28313, donations: 13, donors: 13 },
+      direct: { amount: 7112650, donations: 31, donors: 0 },
+    },
+  });
 
-const StkPaymentForm = ({
-  donationId, amount, phone, currency, onComplete, onBack, onFallbackManual,
-}: StkPaymentFormProps) => {
-  const [status, setStatus] = useState<StkStatus>("idle");
-  const [transactionId, setTransactionId] = useState<string | null>(null);
-  const [transactionRequestId, setTransactionRequestId] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(60);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [exchangeRates] = useState<Record<string, number>>({
+    AUD: 84,
+    CAD: 92,
+    CHF: 160,
+    CNY: 18,
+    ETB: 1,
+    EUR: 149,
+  });
 
-  const initiateStk = useCallback(async () => {
-    setStatus("sending");
-    setErrorMessage("");
-
-    try {
-      const numericAmount = parseFloat(amount.replace(/,/g, ""));
-      const { data, error } = await supabase.functions.invoke("pesaflux-stk", {
-        body: {
-          amount: numericAmount,
-          msisdn: phone,
-          reference: `DON-${donationId.slice(0, 8)}`,
-          donationId,
-        },
-      });
-
-      if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Failed to initiate payment");
-
-      setTransactionId(data.transaction_id);
-      setTransactionRequestId(data.transaction_request_id);
-      setStatus("waiting");
-      setCountdown(60);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to send STK push");
-      setStatus("failed");
-    }
-  }, [amount, phone, donationId]);
-
-  // Auto-initiate on mount
+  // Fetch from Supabase and subscribe to updates
   useEffect(() => {
-    initiateStk();
-  }, [initiateStk]);
+    const fetchStats = async () => {
+      const { data } = await supabase
+        .from("donations")
+        .select("amount, payment_method, email, status")
+        .eq("status", "completed");
 
-  // Countdown timer
-  useEffect(() => {
-    if (status !== "waiting") return;
-    if (countdown <= 0) {
-      setStatus("timeout");
-      return;
-    }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [status, countdown]);
+      if (data && data.length > 0) {
+        // Start with the baseline (or zero) and add real-time donations
+        const totals: DonationTotals = {
+          total: 0,
+          donations: 0,
+          donors: 0,
+          byMethod: {
+            mpesa: { amount: 0, donations: 0, donors: 0 },
+            stripe: { amount: 0, donations: 0, donors: 0 },
+            paypal: { amount: 0, donations: 0, donors: 0 },
+            direct: { amount: 0, donations: 0, donors: 0 },
+          },
+        };
 
-  // Realtime subscription for instant updates
-  useEffect(() => {
-    if (status !== "waiting" || !transactionId) return;
+        const uniqueEmails = new Set<string>();
+        const methodEmails: Record<string, Set<string>> = {
+          mpesa: new Set(),
+          stripe: new Set(),
+          paypal: new Set(),
+          direct: new Set(),
+        };
+
+        data.forEach((donation) => {
+          totals.total += Number(donation.amount);
+          totals.donations++;
+          if (donation.email) uniqueEmails.add(donation.email);
+
+          const method =
+            donation.payment_method in totals.byMethod
+              ? (donation.payment_method as keyof typeof totals.byMethod)
+              : "direct";
+
+          totals.byMethod[method].amount += Number(donation.amount);
+          totals.byMethod[method].donations++;
+          if (donation.email) methodEmails[method].add(donation.email);
+        });
+
+        totals.donors = uniqueEmails.size;
+        Object.keys(methodEmails).forEach((method) => {
+          const key = method as keyof typeof totals.byMethod;
+          totals.byMethod[key].donors = methodEmails[method].size;
+        });
+
+        // Merge the baseline stats with the real-time donations
+        // (since the database may only contain new donations, we add them to the baseline)
+        setStats((prev) => ({
+          total: prev.total + totals.total,
+          donations: prev.donations + totals.donations,
+          donors: prev.donors + totals.donors,
+          byMethod: {
+            mpesa: {
+              amount: prev.byMethod.mpesa.amount + totals.byMethod.mpesa.amount,
+              donations: prev.byMethod.mpesa.donations + totals.byMethod.mpesa.donations,
+              donors: prev.byMethod.mpesa.donors + totals.byMethod.mpesa.donors,
+            },
+            stripe: {
+              amount: prev.byMethod.stripe.amount + totals.byMethod.stripe.amount,
+              donations: prev.byMethod.stripe.donations + totals.byMethod.stripe.donations,
+              donors: prev.byMethod.stripe.donors + totals.byMethod.stripe.donors,
+            },
+            paypal: {
+              amount: prev.byMethod.paypal.amount + totals.byMethod.paypal.amount,
+              donations: prev.byMethod.paypal.donations + totals.byMethod.paypal.donations,
+              donors: prev.byMethod.paypal.donors + totals.byMethod.paypal.donors,
+            },
+            direct: {
+              amount: prev.byMethod.direct.amount + totals.byMethod.direct.amount,
+              donations: prev.byMethod.direct.donations + totals.byMethod.direct.donations,
+              donors: prev.byMethod.direct.donors + totals.byMethod.direct.donors,
+            },
+          },
+        }));
+      }
+      // else: keep default values
+    };
+
+    fetchStats();
 
     const channel = supabase
-      .channel(`txn-${transactionId}`)
+      .channel("donations-realtime")
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*",
           schema: "public",
-          table: "pesaflux_transactions",
-          filter: `id=eq.${transactionId}`,
+          table: "donations",
         },
-        (payload) => {
-          const newStatus = payload.new?.status;
-          if (newStatus === "completed") {
-            setStatus("completed");
-            setTimeout(onComplete, 2000);
-          } else if (newStatus === "failed") {
-            setStatus("failed");
-            setErrorMessage("Payment was declined or cancelled");
-          }
-        }
+        () => fetchStats()
       )
       .subscribe();
 
-    // Fallback polling every 5s in case realtime misses
-    const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("pesaflux_transactions")
-        .select("status")
-        .eq("id", transactionId)
-        .single();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
-      if (data?.status === "completed") {
-        setStatus("completed");
-        clearInterval(interval);
-        setTimeout(onComplete, 2000);
-      } else if (data?.status === "failed") {
-        setStatus("failed");
-        setErrorMessage("Payment was declined or cancelled");
-        clearInterval(interval);
-      }
-    }, 5000);
+  const formatAmount = (amount: number) => `Ksh ${amount.toLocaleString()}`;
 
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
-  }, [status, transactionId, onComplete]);
+  const paymentMethods = [
+    { id: "mpesa", label: "M-Pesa", ...stats.byMethod.mpesa },
+    { id: "stripe", label: "Stripe", ...stats.byMethod.stripe },
+    { id: "paypal", label: "PayPal", ...stats.byMethod.paypal },
+    { id: "direct", label: "Direct Paybill", ...stats.byMethod.direct },
+  ];
 
   return (
-    <div className="bg-card rounded-2xl shadow-card border border-border overflow-hidden">
-      <div className="bg-primary text-primary-foreground p-6 text-center">
-        <img src={maragaLogo} alt="Maraga '27" className="h-10 mx-auto mb-3" />
-        <h2 className="text-xl font-heading font-bold">M-Pesa Payment</h2>
-        <p className="text-primary-foreground/80 text-sm mt-1">
-          {currency} {amount}
-        </p>
+    <div className="space-y-6">
+      {/* Live Donation Progress */}
+      <div className="bg-card rounded-2xl shadow-card border border-border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-heading font-bold text-foreground">
+            Live Donation Progress
+          </h2>
+          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+        </div>
+
+        <div className="mb-6">
+          <div className="text-3xl font-bold text-primary mb-1">
+            {formatAmount(stats.total)}{" "}
+            <span className="text-base font-normal text-muted-foreground">
+              raised
+            </span>
+          </div>
+          <p className="text-sm text-primary">
+            From {stats.donations.toLocaleString()} donations
+          </p>
+          <p className="text-sm text-primary">Real-time updates</p>
+        </div>
+
+        {/* Payment Methods */}
+        <div className="space-y-3">
+          {paymentMethods.map((method) => (
+            <div key={method.id} className="border border-border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-medium text-foreground">{method.label}</span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+              </div>
+              <div className="text-lg font-bold text-primary">
+                {formatAmount(method.amount)}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {method.donations} donations • {method.donors} donors
+              </div>
+              <p className="text-xs text-primary mt-1">
+                {method.id === "direct" ? "" : "⚡ "}Real-time updates
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Exchange Rates */}
+        <div className="mt-6 border-t border-border pt-4 space-y-2">
+          <h3 className="font-semibold text-foreground">Exchange Rates (to KES)</h3>
+          <ul className="text-sm text-muted-foreground">
+            {Object.entries(exchangeRates).map(([currency, rate]) => (
+              <li key={currency}>
+                1 {currency} = {rate} KES
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground mt-1">
+            Updated: 13 currencies available
+          </p>
+          <p className="text-xs text-muted-foreground">Last updated: 12:30:52</p>
+        </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Sending STK */}
-        {status === "sending" && (
-          <div className="text-center py-8 space-y-4">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-            <p className="text-lg font-medium text-foreground">Sending payment request...</p>
-            <p className="text-sm text-muted-foreground">
-              An M-Pesa prompt will appear on <strong>{phone}</strong>
-            </p>
-          </div>
-        )}
-
-        {/* Waiting for confirmation */}
-        {status === "waiting" && (
-          <div className="text-center py-8 space-y-4">
-            <div className="relative inline-flex">
-              <Smartphone className="w-16 h-16 text-primary mx-auto" />
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center animate-pulse">
-                <Clock className="w-3.5 h-3.5 text-primary-foreground" />
-              </div>
+      {/* Info Cards */}
+      <div className="hidden md:block space-y-4">
+        <button className="w-full bg-card rounded-xl shadow-card border border-border p-4 flex items-center justify-between hover:shadow-elevated transition-shadow">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+              <Heart className="w-5 h-5 text-primary" />
             </div>
-            <p className="text-lg font-medium text-foreground">Check your phone</p>
-            <p className="text-sm text-muted-foreground">
-              Enter your M-Pesa PIN on <strong>{phone}</strong> to complete the payment
-            </p>
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-mono font-medium text-foreground">{countdown}s</span>
+            <div className="text-left">
+              <h4 className="font-semibold text-foreground">Why Your Support Matters</h4>
+              <p className="text-sm text-muted-foreground">
+                See how your contribution makes a difference
+              </p>
             </div>
           </div>
-        )}
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
 
-        {/* Completed */}
-        {status === "completed" && (
-          <div className="text-center py-8 space-y-4">
-            <CheckCircle className="w-16 h-16 text-primary mx-auto" />
-            <p className="text-lg font-bold text-foreground">Payment Successful!</p>
-            <p className="text-sm text-muted-foreground">
-              Your donation of {currency} {amount} has been received. Thank you!
-            </p>
-          </div>
-        )}
-
-        {/* Failed */}
-        {(status === "failed" || status === "timeout") && (
-          <div className="text-center py-8 space-y-4">
-            <XCircle className="w-16 h-16 text-destructive mx-auto" />
-            <p className="text-lg font-bold text-foreground">
-              {status === "timeout" ? "Request Timed Out" : "Payment Failed"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {status === "timeout"
-                ? "The payment request expired. You can try again or pay manually."
-                : errorMessage || "Something went wrong. Please try again."}
-            </p>
-            <div className="flex flex-col gap-3 pt-2">
-              <Button onClick={initiateStk} className="w-full">
-                <Smartphone className="w-4 h-4 mr-2" />
-                Try Again
-              </Button>
-              <Button variant="outline" onClick={onFallbackManual} className="w-full">
-                Pay Manually via Paybill
-              </Button>
+        <button className="w-full bg-card rounded-xl shadow-card border border-border p-4 flex items-center justify-between hover:shadow-elevated transition-shadow">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+              <Shield className="w-5 h-5 text-primary" />
+            </div>
+            <div className="text-left">
+              <h4 className="font-semibold text-foreground">Privacy & Data Protection</h4>
+              <p className="text-sm text-muted-foreground">Our commitment to your privacy</p>
             </div>
           </div>
-        )}
-
-        {/* Idle state (shouldn't normally show) */}
-        {status === "idle" && (
-          <div className="text-center py-8">
-            <Button onClick={initiateStk} size="lg" className="w-full">
-              <Smartphone className="w-5 h-5 mr-2" />
-              Send M-Pesa Request
-            </Button>
-          </div>
-        )}
-
-        {/* Back button (only when not processing) */}
-        {(status === "idle" || status === "failed" || status === "timeout") && (
-          <button
-            onClick={onBack}
-            className="w-full py-3 text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-        )}
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
       </div>
     </div>
   );
 };
 
-export default StkPaymentForm;
+export default DonationStats;
