@@ -6,18 +6,26 @@ export function useMaintenanceMode() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "maintenance_mode")
-        .maybeSingle();
+    let cancelled = false;
 
-      setIsMaintenanceMode(data?.value === "true");
-      setIsLoading(false);
-    };
+    // Use a timeout to prevent blocking the app if the query is slow
+    const timeout = setTimeout(() => {
+      if (!cancelled && isLoading) {
+        setIsLoading(false); // Unblock after 3s even if query hasn't returned
+      }
+    }, 3000);
 
-    fetch();
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "maintenance_mode")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) {
+          setIsMaintenanceMode(data?.value === "true");
+          setIsLoading(false);
+        }
+      });
 
     const channel = supabase
       .channel("maintenance-mode")
@@ -30,7 +38,11 @@ export function useMaintenanceMode() {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return { isMaintenanceMode, isLoading };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,6 +7,16 @@ interface AuthState {
   session: Session | null;
   isLoading: boolean;
   isAdmin: boolean;
+}
+
+async function checkAdmin(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  return data?.some(r =>
+    r.role === "admin" || r.role === "moderator" || r.role === "editor"
+  ) ?? false;
 }
 
 export function useAuth() {
@@ -18,76 +28,58 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const user = session?.user ?? null;
-        
-        // Check admin role
-        let isAdmin = false;
-        if (user) {
-          const { data: roles } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id);
-          
-          isAdmin = roles?.some(r => 
-            r.role === "admin" || r.role === "moderator" || r.role === "editor"
-          ) ?? false;
-        }
+    let cancelled = false;
 
-        setState({
-          user,
-          session,
-          isLoading: false,
-          isAdmin,
-        });
+    // 1. Restore session from storage first
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (cancelled) return;
+      if (session?.user) {
+        const isAdmin = await checkAdmin(session.user.id);
+        if (!cancelled) {
+          setState({ user: session.user, session, isLoading: false, isAdmin });
+        }
+      } else {
+        if (!cancelled) {
+          setState({ user: null, session: null, isLoading: false, isAdmin: false });
+        }
+      }
+    });
+
+    // 2. Listen for subsequent auth changes (sign in/out from other tabs)
+    // IMPORTANT: Never await inside this callback
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (cancelled) return;
+        const user = session?.user ?? null;
+        if (user) {
+          // Set user immediately, then check admin in background
+          setState(prev => ({ ...prev, user, session, isLoading: false }));
+          checkAdmin(user.id).then(isAdmin => {
+            if (!cancelled) {
+              setState(prev => ({ ...prev, isAdmin }));
+            }
+          });
+        } else {
+          setState({ user: null, session: null, isLoading: false, isAdmin: false });
+        }
       }
     );
 
-    // THEN get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .then(({ data: roles }) => {
-            const isAdmin = roles?.some(r => 
-              r.role === "admin" || r.role === "moderator" || r.role === "editor"
-            ) ?? false;
-            
-            setState({
-              user: session.user,
-              session,
-              isLoading: false,
-              isAdmin,
-            });
-          });
-      } else {
-        setState(prev => ({ ...prev, isLoading: false }));
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     return { data, error };
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
-  };
+  }, []);
 
-  return {
-    ...state,
-    signIn,
-    signOut,
-  };
+  return { ...state, signIn, signOut };
 }
