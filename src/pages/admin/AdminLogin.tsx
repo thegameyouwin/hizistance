@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,15 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn } = useAuth();
+  const { user, isAdmin, isLoading, signIn } = useAuth();
   const navigate = useNavigate();
+
+  // Auto-redirect if already logged in as admin
+  useEffect(() => {
+    if (!isLoading && user && isAdmin) {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, [user, isAdmin, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,12 +33,21 @@ const AdminLogin = () => {
       const { error: signInError } = await signIn(email, password);
       if (signInError) { setError(signInError.message); return; }
       navigate("/admin/dashboard");
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Show spinner while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[hsl(215,50%,12%)] flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-b-2 border-primary rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[hsl(215,50%,12%)] flex items-center justify-center p-4">
