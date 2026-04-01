@@ -31,31 +31,42 @@ const Donate = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentDonationId, setCurrentDonationId] = useState<string | null>(null);
 
-  const saveDonation = async (status: string = "pending") => {
-    if (!formData) return null;
-    const numericAmount = parseFloat(donationAmount.replace(/,/g, ""));
-    const { data, error } = await supabase
-      .from("donations")
-      .insert({
-        name: formData.name || null,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        amount: numericAmount,
-        currency: formData.currency,
-        payment_method: paymentMethod,
-        frequency: formData.frequency,
-        message: formData.message || null,
-        show_info: formData.showInfo,
-        status,
-      })
-      .select()
-      .single();
-    if (error) {
-      console.error("Error saving donation:", error);
+  const saveDonation = async (
+    currentFormData: DonationFormData,
+    currentAmount: string,
+    currentMethod: "mpesa" | "stripe",
+    status: string = "pending",
+    retries = 2
+  ): Promise<any> => {
+    const numericAmount = parseFloat(currentAmount.replace(/,/g, ""));
+    try {
+      const { data, error } = await supabase
+        .from("donations")
+        .insert({
+          name: currentFormData.showInfo ? (currentFormData.name || null) : null,
+          email: currentFormData.email || null,
+          phone: currentFormData.phone || null,
+          amount: numericAmount,
+          currency: currentFormData.currency,
+          payment_method: currentMethod,
+          frequency: currentFormData.frequency,
+          message: currentFormData.message || null,
+          show_info: currentFormData.showInfo,
+          status,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      if (retries > 0) {
+        await new Promise(r => setTimeout(r, 1000));
+        return saveDonation(currentFormData, currentAmount, currentMethod, status, retries - 1);
+      }
+      console.error("Error saving donation:", err);
       toast.error("Failed to save donation. Please try again.");
       return null;
     }
-    return data;
   };
 
   const handleFormSubmit = async (
@@ -63,6 +74,7 @@ const Donate = () => {
     method: "mpesa" | "stripe",
     data: DonationFormData
   ) => {
+    if (isSubmitting) return; // Prevent double-submit
     setDonationAmount(amount);
     setPaymentMethod(method);
     setFormData(data);
@@ -70,9 +82,8 @@ const Donate = () => {
     if (method === "stripe") {
       setStep("payment-selection");
     } else {
-      // M-Pesa: save donation then initiate STK push
       setIsSubmitting(true);
-      const donation = await saveDonation("pending");
+      const donation = await saveDonation(data, amount, method);
       if (donation) {
         setCurrentDonationId(donation.id);
         setStep("stk-payment");
