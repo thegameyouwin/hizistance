@@ -72,14 +72,38 @@ const StkPaymentForm = ({
     return () => clearTimeout(timer);
   }, [status, countdown]);
 
-  // Poll for completion
+  // Realtime subscription for instant updates
   useEffect(() => {
     if (status !== "waiting" || !transactionId) return;
 
+    const channel = supabase
+      .channel(`txn-${transactionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "pesaflux_transactions",
+          filter: `id=eq.${transactionId}`,
+        },
+        (payload) => {
+          const newStatus = payload.new?.status;
+          if (newStatus === "completed") {
+            setStatus("completed");
+            setTimeout(onComplete, 2000);
+          } else if (newStatus === "failed") {
+            setStatus("failed");
+            setErrorMessage("Payment was declined or cancelled");
+          }
+        }
+      )
+      .subscribe();
+
+    // Fallback polling every 5s in case realtime misses
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from("pesaflux_transactions")
-        .select("status, receipt")
+        .select("status")
         .eq("id", transactionId)
         .single();
 
@@ -92,9 +116,12 @@ const StkPaymentForm = ({
         setErrorMessage("Payment was declined or cancelled");
         clearInterval(interval);
       }
-    }, 3000);
+    }, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [status, transactionId, onComplete]);
 
   return (
