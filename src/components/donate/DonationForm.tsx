@@ -81,8 +81,18 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalAmount = amount || customAmount;
+    if (!finalAmount || parseFloat(finalAmount.replace(/,/g, "")) <= 0) {
+      return;
+    }
+    // Phone is always required for M-Pesa
+    if (paymentMethod === "mpesa" && !formData.phone.trim()) {
+      return;
+    }
     onSubmit(finalAmount, paymentMethod, {
-      ...formData,
+      name: formData.name.trim() || "",
+      phone: formData.phone.trim() || "",
+      email: formData.email.trim() || "",
+      message: formData.message.trim() || "",
       showInfo,
       currency,
       frequency,
@@ -298,19 +308,20 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           {/* Personal Info */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Your Name
+              Your Name {showInfo && <span className="text-destructive">*</span>}
             </label>
             <Input
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Enter your full name"
+              required={showInfo}
             />
           </div>
 
           {paymentMethod === "mpesa" && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Phone Number
+                Phone Number <span className="text-destructive">*</span>
               </label>
               <div className="flex gap-2">
                 <Select defaultValue="+254">
@@ -387,6 +398,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="712345678"
                   className="flex-1"
+                  required
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
