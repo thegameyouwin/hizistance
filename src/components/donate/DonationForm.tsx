@@ -321,7 +321,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           {paymentMethod === "mpesa" && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Phone Number
+                Phone Number <span className="text-destructive">*</span>
               </label>
               <div className="flex gap-2">
                 <Select defaultValue="+254">
@@ -398,6 +398,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="712345678"
                   className="flex-1"
+                  required
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">

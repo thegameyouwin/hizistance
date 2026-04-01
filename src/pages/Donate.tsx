@@ -93,10 +93,11 @@ const Donate = () => {
   };
 
   const handlePaymentSelect = async (provider: "stripe" | "paypal") => {
+    if (isSubmitting || !formData) return; // Prevent double-submit
     setIsSubmitting(true);
     setPaymentMethod("stripe");
-    const donation = await saveDonation("pending");
-    if (!donation || !formData) { setIsSubmitting(false); return; }
+    const donation = await saveDonation(formData, donationAmount, "stripe");
+    if (!donation) { setIsSubmitting(false); return; }
 
     const numericAmount = parseFloat(donationAmount.replace(/,/g, ""));
     const baseUrl = window.location.origin;
