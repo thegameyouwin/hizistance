@@ -308,7 +308,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           {/* Personal Info */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Your Name {showInfo && <span className="text-destructive">*</span>}
+              Your Name (optional) {showInfo && <span className="text-destructive">*</span>}
             </label>
             <Input
               value={formData.name}
@@ -409,7 +409,7 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Email Address
+              Email Address (optional)
             </label>
             <Input
               type="email"
