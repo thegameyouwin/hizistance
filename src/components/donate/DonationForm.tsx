@@ -308,12 +308,13 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
           {/* Personal Info */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Your Name
+              Your Name {showInfo && <span className="text-destructive">*</span>}
             </label>
             <Input
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Enter your full name"
+              required={showInfo}
             />
           </div>
 
