@@ -81,8 +81,18 @@ const DonationForm = ({ onSubmit }: DonationFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalAmount = amount || customAmount;
+    if (!finalAmount || parseFloat(finalAmount.replace(/,/g, "")) <= 0) {
+      return;
+    }
+    // Phone is always required for M-Pesa
+    if (paymentMethod === "mpesa" && !formData.phone.trim()) {
+      return;
+    }
     onSubmit(finalAmount, paymentMethod, {
-      ...formData,
+      name: formData.name.trim() || "",
+      phone: formData.phone.trim() || "",
+      email: formData.email.trim() || "",
+      message: formData.message.trim() || "",
       showInfo,
       currency,
       frequency,
