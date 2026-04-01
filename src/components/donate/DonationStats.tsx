@@ -15,13 +15,13 @@ interface DonationTotals {
 }
 
 const DonationStats = () => {
-  // Default “starts” values
+  // Updated baseline stats with the new values
   const [stats, setStats] = useState<DonationTotals>({
-    total: 7814950,
-    donations: 2003,
-    donors: 1680,
+    total: 7957750,        // Ksh 7,957,750
+    donations: 2413,
+    donors: 0,             // will be calculated from real data
     byMethod: {
-      mpesa: { amount: 591096, donations: 1929, donors: 1643 },
+      mpesa: { amount: 733896, donations: 2339, donors: 1972 },
       stripe: { amount: 82891, donations: 30, donors: 24 },
       paypal: { amount: 28313, donations: 13, donors: 13 },
       direct: { amount: 7112650, donations: 31, donors: 0 },
@@ -46,6 +46,7 @@ const DonationStats = () => {
         .eq("status", "completed");
 
       if (data && data.length > 0) {
+        // Start with the baseline (or zero) and add real-time donations
         const totals: DonationTotals = {
           total: 0,
           donations: 0,
@@ -87,7 +88,35 @@ const DonationStats = () => {
           totals.byMethod[key].donors = methodEmails[method].size;
         });
 
-        setStats(totals);
+        // Merge the baseline stats with the real-time donations
+        // (since the database may only contain new donations, we add them to the baseline)
+        setStats((prev) => ({
+          total: prev.total + totals.total,
+          donations: prev.donations + totals.donations,
+          donors: prev.donors + totals.donors,
+          byMethod: {
+            mpesa: {
+              amount: prev.byMethod.mpesa.amount + totals.byMethod.mpesa.amount,
+              donations: prev.byMethod.mpesa.donations + totals.byMethod.mpesa.donations,
+              donors: prev.byMethod.mpesa.donors + totals.byMethod.mpesa.donors,
+            },
+            stripe: {
+              amount: prev.byMethod.stripe.amount + totals.byMethod.stripe.amount,
+              donations: prev.byMethod.stripe.donations + totals.byMethod.stripe.donations,
+              donors: prev.byMethod.stripe.donors + totals.byMethod.stripe.donors,
+            },
+            paypal: {
+              amount: prev.byMethod.paypal.amount + totals.byMethod.paypal.amount,
+              donations: prev.byMethod.paypal.donations + totals.byMethod.paypal.donations,
+              donors: prev.byMethod.paypal.donors + totals.byMethod.paypal.donors,
+            },
+            direct: {
+              amount: prev.byMethod.direct.amount + totals.byMethod.direct.amount,
+              donations: prev.byMethod.direct.donations + totals.byMethod.direct.donations,
+              donors: prev.byMethod.direct.donors + totals.byMethod.direct.donors,
+            },
+          },
+        }));
       }
       // else: keep default values
     };
@@ -177,7 +206,7 @@ const DonationStats = () => {
           <p className="text-xs text-muted-foreground mt-1">
             Updated: 13 currencies available
           </p>
-          <p className="text-xs text-muted-foreground">Last updated: 01:33:15</p>
+          <p className="text-xs text-muted-foreground">Last updated: 12:30:52</p>
         </div>
       </div>
 
