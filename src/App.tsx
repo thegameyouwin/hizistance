@@ -25,6 +25,8 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const subdomain = useSubdomain();
   const { isMaintenanceMode, isLoading } = useMaintenanceMode();
+  const pathname = window.location.pathname;
+  const isAdminRoute = pathname.startsWith("/admin");
 
   // Admin subdomain routing
   if (subdomain === "admin") {
@@ -38,19 +40,28 @@ const AppContent = () => {
     );
   }
 
-  // Maintenance mode: block public routes, keep admin accessible
-  if (!isLoading && isMaintenanceMode) {
+  // Admin routes are always accessible regardless of maintenance
+  if (isAdminRoute) {
     return (
       <Routes>
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    );
+  }
+
+  // For public routes: show maintenance if active (don't block on loading)
+  if (!isLoading && isMaintenanceMode) {
+    return (
+      <Routes>
         <Route path="*" element={<Maintenance />} />
       </Routes>
     );
   }
 
-  // Normal routing
+  // Normal routing (render immediately, don't wait for maintenance check)
   return (
     <Routes>
       <Route path="/" element={<Index />} />
@@ -59,9 +70,6 @@ const AppContent = () => {
       <Route path="/press" element={<Press />} />
       <Route path="/join" element={<Join />} />
       <Route path="/donate" element={<Donate />} />
-      <Route path="/admin" element={<AdminLogin />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
