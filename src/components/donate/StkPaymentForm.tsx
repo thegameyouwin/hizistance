@@ -1,11 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft, CheckCircle, XCircle, Smartphone, Clock } from "lucide-react";
-import { toast } from "sonner";
 import maragaLogo from "@/assets/maraga-logo.png";
+import { getPendingStkPayment, savePendingStkPayment } from "@/lib/pendingStkPayment";
 
 interface StkPaymentFormProps {
   donationId: string;
@@ -19,18 +17,132 @@ interface StkPaymentFormProps {
 
 type StkStatus = "idle" | "sending" | "waiting" | "completed" | "failed" | "timeout";
 
+interface StatusCheckResponse {
+  status?: string;
+  message?: string | null;
+  transaction_id?: string | null;
+  transaction_request_id?: string | null;
+}
+
+const REQUEST_TIMEOUT_SECONDS = 120;
+
 const StkPaymentForm = ({
   donationId, amount, phone, currency, onComplete, onBack, onFallbackManual,
 }: StkPaymentFormProps) => {
   const [status, setStatus] = useState<StkStatus>("idle");
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [transactionRequestId, setTransactionRequestId] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(REQUEST_TIMEOUT_SECONDS);
   const [errorMessage, setErrorMessage] = useState("");
+  const hasInitializedRef = useRef(false);
+  const hasHandledCompletionRef = useRef(false);
+  const isCheckingStatusRef = useRef(false);
+  const completionTimeoutRef = useRef<number | null>(null);
+
+  const persistPendingPayment = useCallback((nextTransactionId: string | null, nextTransactionRequestId: string | null) => {
+    const existingPending = getPendingStkPayment();
+
+    savePendingStkPayment({
+      donationId,
+      amount,
+      phone,
+      currency,
+      createdAt: existingPending?.createdAt ?? Date.now(),
+      transactionId: nextTransactionId,
+      transactionRequestId: nextTransactionRequestId,
+    });
+  }, [amount, currency, donationId, phone]);
+
+  const handleTerminalStatus = useCallback((nextStatus: Extract<StkStatus, "completed" | "failed">, message?: string) => {
+    setStatus(nextStatus);
+
+    if (message) {
+      setErrorMessage(message);
+    }
+
+    if (nextStatus === "completed" && !hasHandledCompletionRef.current) {
+      hasHandledCompletionRef.current = true;
+
+      if (completionTimeoutRef.current !== null) {
+        window.clearTimeout(completionTimeoutRef.current);
+      }
+
+      completionTimeoutRef.current = window.setTimeout(onComplete, 1200);
+    }
+  }, [onComplete]);
+
+  const checkStatus = useCallback(async (options: {
+    forceRefresh?: boolean;
+    fallbackTransactionId?: string | null;
+    fallbackTransactionRequestId?: string | null;
+  } = {}) => {
+    const currentTransactionId = options.fallbackTransactionId ?? transactionId;
+    const currentTransactionRequestId = options.fallbackTransactionRequestId ?? transactionRequestId;
+
+    if (!currentTransactionId && !currentTransactionRequestId) return false;
+    if (isCheckingStatusRef.current) return false;
+
+    isCheckingStatusRef.current = true;
+
+    try {
+      const { data, error } = await supabase.functions.invoke<StatusCheckResponse>("pesaflux-status", {
+        body: {
+          transaction_id: currentTransactionId,
+          transaction_request_id: currentTransactionRequestId,
+          force_refresh: options.forceRefresh ?? false,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+
+      const nextTransactionId = typeof data?.transaction_id === "string"
+        ? data.transaction_id
+        : currentTransactionId ?? null;
+      const nextTransactionRequestId = typeof data?.transaction_request_id === "string"
+        ? data.transaction_request_id
+        : currentTransactionRequestId ?? null;
+
+      if (nextTransactionId && nextTransactionId !== transactionId) {
+        setTransactionId(nextTransactionId);
+      }
+
+      if (nextTransactionRequestId && nextTransactionRequestId !== transactionRequestId) {
+        setTransactionRequestId(nextTransactionRequestId);
+      }
+
+      if (nextTransactionId || nextTransactionRequestId) {
+        persistPendingPayment(nextTransactionId, nextTransactionRequestId);
+      }
+
+      if (data?.status === "completed") {
+        handleTerminalStatus("completed");
+        return true;
+      }
+
+      if (data?.status === "failed") {
+        handleTerminalStatus("failed", data.message || "Payment was declined or cancelled");
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error("Unable to refresh STK payment status:", err);
+      return false;
+    } finally {
+      isCheckingStatusRef.current = false;
+    }
+  }, [handleTerminalStatus, persistPendingPayment, transactionId, transactionRequestId]);
 
   const initiateStk = useCallback(async () => {
     setStatus("sending");
     setErrorMessage("");
+    setCountdown(REQUEST_TIMEOUT_SECONDS);
+    hasHandledCompletionRef.current = false;
+
+    if (completionTimeoutRef.current !== null) {
+      window.clearTimeout(completionTimeoutRef.current);
+      completionTimeoutRef.current = null;
+    }
 
     try {
       const numericAmount = parseFloat(amount.replace(/,/g, ""));
@@ -46,35 +158,74 @@ const StkPaymentForm = ({
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Failed to initiate payment");
 
-      setTransactionId(data.transaction_id);
-      setTransactionRequestId(data.transaction_request_id);
+      const nextTransactionId = typeof data.transaction_id === "string" ? data.transaction_id : null;
+      const nextTransactionRequestId = typeof data.transaction_request_id === "string"
+        ? data.transaction_request_id
+        : null;
+
+      if (!nextTransactionId && !nextTransactionRequestId) {
+        throw new Error("Payment request started, but no tracking reference was returned");
+      }
+
+      setTransactionId(nextTransactionId);
+      setTransactionRequestId(nextTransactionRequestId);
+      persistPendingPayment(nextTransactionId, nextTransactionRequestId);
       setStatus("waiting");
-      setCountdown(60);
+      setCountdown(REQUEST_TIMEOUT_SECONDS);
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to send STK push");
       setStatus("failed");
     }
-  }, [amount, phone, donationId]);
+  }, [amount, donationId, persistPendingPayment, phone]);
 
-  // Auto-initiate on mount
   useEffect(() => {
-    initiateStk();
-  }, [initiateStk]);
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
 
-  // Countdown timer
-  useEffect(() => {
-    if (status !== "waiting") return;
-    if (countdown <= 0) {
-      setStatus("timeout");
+    const pendingPayment = getPendingStkPayment();
+
+    if (pendingPayment?.donationId === donationId && (pendingPayment.transactionId || pendingPayment.transactionRequestId)) {
+      setTransactionId(pendingPayment.transactionId ?? null);
+      setTransactionRequestId(pendingPayment.transactionRequestId ?? null);
+      setStatus("waiting");
+      setCountdown(REQUEST_TIMEOUT_SECONDS);
+
+      void checkStatus({
+        forceRefresh: true,
+        fallbackTransactionId: pendingPayment.transactionId ?? null,
+        fallbackTransactionRequestId: pendingPayment.transactionRequestId ?? null,
+      });
       return;
     }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [status, countdown]);
 
-  // Realtime subscription for instant updates
+    void initiateStk();
+  }, [checkStatus, donationId, initiateStk]);
+
+  useEffect(() => {
+    if (status !== "waiting") return;
+
+    if (countdown <= 0) {
+      void checkStatus({ forceRefresh: true }).then((isFinal) => {
+        if (!isFinal) {
+          setStatus((currentStatus) => (currentStatus === "waiting" ? "timeout" : currentStatus));
+        }
+      });
+      return;
+    }
+
+    const timer = window.setTimeout(() => setCountdown((currentCountdown) => currentCountdown - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [checkStatus, countdown, status]);
+
+  useEffect(() => {
+    if (status !== "waiting" || (!transactionId && !transactionRequestId)) return;
+    void checkStatus();
+  }, [checkStatus, status, transactionId, transactionRequestId]);
+
   useEffect(() => {
     if (status !== "waiting" || !transactionId) return;
+
+    let retriedAfterChannelError = false;
 
     const channel = supabase
       .channel(`txn-${transactionId}`)
@@ -87,42 +238,69 @@ const StkPaymentForm = ({
           filter: `id=eq.${transactionId}`,
         },
         (payload) => {
-          const newStatus = payload.new?.status;
+          const newStatus = typeof payload.new?.status === "string" ? payload.new.status : null;
           if (newStatus === "completed") {
-            setStatus("completed");
-            setTimeout(onComplete, 2000);
+            handleTerminalStatus("completed");
           } else if (newStatus === "failed") {
-            setStatus("failed");
-            setErrorMessage("Payment was declined or cancelled");
+            handleTerminalStatus("failed", "Payment was declined or cancelled");
           }
         }
       )
-      .subscribe();
-
-    // Fallback polling every 5s in case realtime misses
-    const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("pesaflux_transactions")
-        .select("status")
-        .eq("id", transactionId)
-        .single();
-
-      if (data?.status === "completed") {
-        setStatus("completed");
-        clearInterval(interval);
-        setTimeout(onComplete, 2000);
-      } else if (data?.status === "failed") {
-        setStatus("failed");
-        setErrorMessage("Payment was declined or cancelled");
-        clearInterval(interval);
-      }
-    }, 5000);
+      .subscribe((subscriptionStatus) => {
+        if (subscriptionStatus === "CHANNEL_ERROR" && !retriedAfterChannelError) {
+          retriedAfterChannelError = true;
+          void checkStatus({ forceRefresh: true });
+        }
+      });
 
     return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
+      void supabase.removeChannel(channel);
     };
-  }, [status, transactionId, onComplete]);
+  }, [checkStatus, handleTerminalStatus, status, transactionId]);
+
+  useEffect(() => {
+    if (status !== "waiting") return;
+
+    const interval = window.setInterval(() => {
+      void checkStatus();
+    }, 4000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [checkStatus, status]);
+
+  useEffect(() => {
+    if (status !== "waiting") return;
+
+    const handleResumeCheck = () => {
+      void checkStatus({ forceRefresh: true });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        handleResumeCheck();
+      }
+    };
+
+    window.addEventListener("focus", handleResumeCheck);
+    window.addEventListener("pageshow", handleResumeCheck);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleResumeCheck);
+      window.removeEventListener("pageshow", handleResumeCheck);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [checkStatus, status]);
+
+  useEffect(() => {
+    return () => {
+      if (completionTimeoutRef.current !== null) {
+        window.clearTimeout(completionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="bg-card rounded-2xl shadow-card border border-border overflow-hidden">
