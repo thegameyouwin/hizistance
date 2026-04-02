@@ -30,7 +30,7 @@ export function useAuth() {
   useEffect(() => {
     let cancelled = false;
 
-    // 1. Restore session from storage first
+    // 1. Restore session from storage
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (cancelled) return;
       if (session?.user) {
@@ -45,18 +45,17 @@ export function useAuth() {
       }
     });
 
-    // 2. Listen for subsequent auth changes (sign in/out from other tabs)
-    // IMPORTANT: Never await inside this callback
+    // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (cancelled) return;
         const user = session?.user ?? null;
         if (user) {
-          // Set user immediately, then check admin in background
-          setState(prev => ({ ...prev, user, session, isLoading: false }));
+          // ✅ Keep loading true until admin role is verified
+          setState(prev => ({ ...prev, user, session, isLoading: true }));
           checkAdmin(user.id).then(isAdmin => {
             if (!cancelled) {
-              setState(prev => ({ ...prev, isAdmin }));
+              setState(prev => ({ ...prev, isAdmin, isLoading: false }));
             }
           });
         } else {
