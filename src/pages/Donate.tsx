@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DonationForm from "@/components/donate/DonationForm";
@@ -10,6 +10,7 @@ import ThankYouDonation from "@/components/ThankYouDonation";
 import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { clearPendingStkPayment, getPendingStkPayment, savePendingStkPayment } from "@/lib/pendingStkPayment";
 
 type DonateStep = "form" | "payment-selection" | "stk-payment" | "manual-payment" | "thank-you";
 
@@ -23,6 +24,16 @@ interface DonationFormData {
   frequency: string;
 }
 
+const createRestoredFormData = (phone: string, currency: string): DonationFormData => ({
+  name: "",
+  phone,
+  email: "",
+  message: "",
+  showInfo: false,
+  currency,
+  frequency: "one-time",
+});
+
 const Donate = () => {
   const [step, setStep] = useState<DonateStep>("form");
   const [donationAmount, setDonationAmount] = useState<string>("1,000");
@@ -30,6 +41,17 @@ const Donate = () => {
   const [formData, setFormData] = useState<DonationFormData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentDonationId, setCurrentDonationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const pendingPayment = getPendingStkPayment();
+    if (!pendingPayment) return;
+
+    setDonationAmount(pendingPayment.amount);
+    setPaymentMethod("mpesa");
+    setCurrentDonationId(pendingPayment.donationId);
+    setFormData(createRestoredFormData(pendingPayment.phone, pendingPayment.currency));
+    setStep("stk-payment");
+  }, []);
 
   const saveDonation = async (
     currentFormData: DonationFormData,
@@ -75,6 +97,7 @@ const Donate = () => {
     data: DonationFormData
   ) => {
     if (isSubmitting) return; // Prevent double-submit
+    clearPendingStkPayment();
     setDonationAmount(amount);
     setPaymentMethod(method);
     setFormData(data);
@@ -85,11 +108,44 @@ const Donate = () => {
       setIsSubmitting(true);
       const donation = await saveDonation(data, amount, method);
       if (donation) {
+        savePendingStkPayment({
+          donationId: donation.id,
+          amount,
+          phone: data.phone,
+          currency: data.currency,
+          createdAt: Date.now(),
+        });
         setCurrentDonationId(donation.id);
         setStep("stk-payment");
       }
       setIsSubmitting(false);
     }
+  };
+
+  const handleStkComplete = () => {
+    clearPendingStkPayment();
+    setStep("thank-you");
+  };
+
+  const handleStkBack = () => {
+    clearPendingStkPayment();
+    setCurrentDonationId(null);
+    setStep("form");
+  };
+
+  const handleFallbackManual = () => {
+    clearPendingStkPayment();
+    setStep("manual-payment");
+  };
+
+  const handleManualPaymentComplete = () => {
+    clearPendingStkPayment();
+    setStep("thank-you");
+  };
+
+  const handleManualPaymentBack = () => {
+    clearPendingStkPayment();
+    setStep("form");
   };
 
   const handlePaymentSelect = async (provider: "stripe" | "paypal") => {
@@ -155,9 +211,9 @@ const Donate = () => {
                   amount={donationAmount}
                   phone={formData.phone}
                   currency={formData.currency}
-                  onComplete={() => setStep("thank-you")}
-                  onBack={() => setStep("form")}
-                  onFallbackManual={() => setStep("manual-payment")}
+                  onComplete={handleStkComplete}
+                  onBack={handleStkBack}
+                  onFallbackManual={handleFallbackManual}
                 />
               )}
 
@@ -166,8 +222,8 @@ const Donate = () => {
                   donationId={currentDonationId}
                   amount={donationAmount}
                   currency={formData.currency}
-                  onComplete={() => setStep("thank-you")}
-                  onBack={() => setStep("form")}
+                  onComplete={handleManualPaymentComplete}
+                  onBack={handleManualPaymentBack}
                 />
               )}
 
